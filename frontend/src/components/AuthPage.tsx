@@ -1,168 +1,229 @@
 import { useState } from 'react';
-import { Shield, Mail, Lock, User } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
 
-interface AuthPageProps {
-  onAuthComplete: (token: string) => void;
-}
+// ─────────────────────────────────────────────────────────────
+// FIREBASE SETUP
+// Replace this config with your own from Firebase Console:
+// console.firebase.google.com → Project Settings → Your apps
+// ─────────────────────────────────────────────────────────────
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import React from 'react';
 
-export function AuthPage({ onAuthComplete }: AuthPageProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+    strokeLinecap="round" strokeLinejoin="round" style={{ width: "100%", height: "100%" }}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, flexShrink: 0 }}>
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────────────────────────
+export function AuthPage({ onAuthComplete }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function handleGoogleSignIn() {
     setLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Generate a unique token for this user session
-    const token = `avt_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    
-    setLoading(false);
-    onAuthComplete(token);
-  };
+    setError('');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      // Pass back the Firebase ID token — use this to verify on your backend
+      const idToken = await user.getIdToken();
+      onAuthComplete(idToken, {
+        name: user.displayName,
+        email: user.email,
+        photo: user.photoURL,
+        uid: user.uid,
+      });
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Sign-in failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      background: "linear-gradient(135deg, #020818 0%, #0c1325 50%, #050d1f 100%)",
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow { 0%,100% { opacity: 0.5; } 50% { opacity: 0.9; } }
+        .auth-card { animation: fadeUp 0.5s ease both; }
+        .google-btn:hover { background: rgba(255,255,255,0.1) !important; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+        .google-btn:active { transform: translateY(0); }
+        .google-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+      `}</style>
+
+      <div className="auth-card" style={{ width: "100%", maxWidth: 420 }}>
+
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="relative">
-            <div className="absolute inset-0 bg-blue-500 blur-xl opacity-50 rounded-full"></div>
-            <Shield className="w-12 h-12 text-blue-400 relative z-10" strokeWidth={1.5} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 36 }}>
+          <div style={{ position: "relative", width: 44, height: 44 }}>
+            <div style={{
+              position: "absolute", inset: 0, background: "#38bdf8",
+              borderRadius: 11, filter: "blur(10px)", opacity: 0.5,
+              animation: "pulse-glow 3s ease-in-out infinite",
+            }}/>
+            <div style={{
+              position: "relative", width: 44, height: 44,
+              background: "linear-gradient(135deg, #38bdf8, #0ea5e9)",
+              borderRadius: 11, display: "flex", alignItems: "center",
+              justifyContent: "center", padding: 10, color: "#fff",
+            }}>
+              <ShieldIcon />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          <span style={{
+            fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 800,
+            background: "linear-gradient(90deg, #7dd3fc, #38bdf8)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>
             AuditVault
-          </h1>
+          </span>
         </div>
 
-        {/* Auth Card */}
-        <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6 bg-slate-800/50 rounded-lg p-1">
-            <button
-              onClick={() => setMode('login')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === 'login'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setMode('signup')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                mode === 'signup'
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
+        {/* Card */}
+        <div style={{
+          background: "rgba(15, 23, 42, 0.7)",
+          backdropFilter: "blur(16px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 20,
+          padding: "36px 32px",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+        }}>
+          <h2 style={{
+            fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800,
+            color: "#f1f5f9", textAlign: "center", marginBottom: 8,
+          }}>
+            Welcome to AuditVault
+          </h2>
+          <p style={{
+            fontSize: 14, color: "#64748b", textAlign: "center",
+            marginBottom: 32, lineHeight: 1.6,
+          }}>
+            Sign in to run security audits on your servers and get AI-powered reports.
+          </p>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-300">Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6 text-base rounded-xl shadow-lg shadow-blue-500/50 hover:shadow-xl hover:shadow-blue-500/60 transition-all duration-300"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Processing...
-                </span>
-              ) : (
-                mode === 'login' ? 'Login' : 'Create Account'
-              )}
-            </Button>
-          </form>
-
-          {/* Footer */}
-          <p className="text-center text-sm text-slate-400 mt-6">
-            {mode === 'login' ? (
+          {/* Google Button */}
+          <button
+            className="google-btn"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            style={{
+              width: "100%",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+              padding: "14px 20px", borderRadius: 12,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "#f1f5f9", fontSize: 15, fontWeight: 600,
+              cursor: "pointer", transition: "all 0.2s",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
+              fontFamily: "inherit",
+            }}
+          >
+            {loading ? (
               <>
-                Don't have an account?{' '}
-                <button onClick={() => setMode('signup')} className="text-blue-400 hover:text-blue-300 font-medium">
-                  Sign up
-                </button>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.2)",
+                  borderTopColor: "#38bdf8",
+                  animation: "spin 0.7s linear infinite",
+                  flexShrink: 0,
+                }}/>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                Signing in...
               </>
             ) : (
               <>
-                Already have an account?{' '}
-                <button onClick={() => setMode('login')} className="text-blue-400 hover:text-blue-300 font-medium">
-                  Login
-                </button>
+                <GoogleIcon />
+                Continue with Google
               </>
             )}
-          </p>
+          </button>
+
+          {/* Error */}
+          {error && (
+            <div style={{
+              marginTop: 16, padding: "10px 14px", borderRadius: 8,
+              background: "rgba(240,92,110,0.1)", border: "1px solid rgba(240,92,110,0.3)",
+              color: "#fca5a5", fontSize: 13, textAlign: "center",
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12,
+            margin: "24px 0", color: "#334155",
+          }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }}/>
+            <span style={{ fontSize: 12, color: "#475569", whiteSpace: "nowrap" }}>what you get</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }}/>
+          </div>
+
+          {/* Benefits */}
+          {[
+            "AI-powered plain-English security reports",
+            "One-command server agent deployment",
+            "Risk scores & prioritized action plans",
+          ].map((benefit, i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: i < 2 ? 10 : 0,
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                background: "rgba(56,189,248,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, color: "#38bdf8", fontWeight: 700,
+              }}>✓</div>
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>{benefit}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Demo Notice */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-slate-500">
-            Demo mode: Enter any credentials to continue
-          </p>
-        </div>
+        {/* Footer note */}
+        <p style={{ textAlign: "center", fontSize: 12, color: "#334155", marginTop: 20, lineHeight: 1.6 }}>
+          By signing in you agree to our{' '}
+          <span style={{ color: "#38bdf8", cursor: "pointer" }}>Terms of Service</span>
+          {' '}and{' '}
+          <span style={{ color: "#38bdf8", cursor: "pointer" }}>Privacy Policy</span>
+        </p>
       </div>
     </div>
   );
