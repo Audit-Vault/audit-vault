@@ -62,5 +62,12 @@
             "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.11.0",
             "typescript": "^5.9.3"
+<<<<<<< HEAD
+=======
+      },
+      "scripts": {
+            "dev": "vite",
+            "build": "vite build"
+>>>>>>> 25cdffca (Remove node_modules)
       }
 }
