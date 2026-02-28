@@ -15,13 +15,12 @@ const MONGO_URI: string = process.env.MONGO_URI!;
 const PORT: string | number = process.env.PORT! || 3000;
 
 const corsOptions = {
-	origin: process.env.FRONTEND_URL, // <-- if your frontend port is different, change it
+	origin: process.env.FRONTEND_URL,
 	credentials: true,
 	optionSuccessStatus: 200
 };
 
-// Middleware:
-app.use(cors(corsOptions)); // <-- for CORS
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -30,7 +29,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/instructions", instructionsRoutes);
 
 app.get("/", (req, res) => {
-	res.send("Hello, World!");
+	res.send({
+		message: "Welcome to the backend API",
+		endpoints: {
+			"/api/auth": "Authentication routes",
+			"/api/instructions": "Instructions routes"
+		}
+	});
 });
 
 app.listen(PORT, () => {
