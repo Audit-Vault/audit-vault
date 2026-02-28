@@ -41,6 +41,7 @@ import {
   AdminContent,
   SupportContent,
 } from './DashboardSections';
+import React from 'react';
 
 interface OrganizationDashboardProps {
   onStartNewAudit: () => void;
