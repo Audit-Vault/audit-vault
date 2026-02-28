@@ -1,10 +1,6 @@
 import { useState } from 'react';
 
-// ─────────────────────────────────────────────────────────────
-// FIREBASE SETUP
-// Replace this config with your own from Firebase Console:
-// console.firebase.google.com → Project Settings → Your apps
-// ─────────────────────────────────────────────────────────────
+
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import React from 'react';
