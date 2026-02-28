@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import React from 'react';
 
 export function DeploymentsContent() {
   const deployments = [

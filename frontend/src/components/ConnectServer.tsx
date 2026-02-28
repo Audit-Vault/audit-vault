@@ -3,6 +3,7 @@ import { Server, Copy, Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import React from 'react';
 
 interface ConnectServerProps {
   userToken: string;
