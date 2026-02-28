@@ -12,7 +12,7 @@ colors.enable();
 const app = express();
 
 const MONGO_URI: string = process.env.MONGO_URI!;
-const PORT: string | number = process.env.PORT! || 3000;
+const PORT: string | number = process.env.PORT! || 4000;
 
 const corsOptions = {
 	origin: process.env.FRONTEND_URL,
@@ -29,7 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/instructions", instructionsRoutes);
 
 app.get("/", (req, res) => {
-	res.send({
+	res.json({
 		message: "Welcome to the backend API",
 		endpoints: {
 			"/api/auth": "Authentication routes",
