@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import colors from "colors";
 import authRoutes from "./routes/authentication";
 import cors from "cors";
+import instructionsRoutes from "./routes/instructions";
 
 dotenv.config();
 colors.enable();
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/instructions", instructionsRoutes);
 
 app.get("/", (req, res) => {
 	res.send("Hello, World!");
