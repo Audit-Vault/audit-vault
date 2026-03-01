@@ -40,7 +40,11 @@ const GoogleIcon = () => (
 // ─────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────
-export function AuthPage({ onAuthComplete }) {
+interface AuthPageProps {
+	onAuthComplete: (token: string) => void;
+}
+
+export function AuthPage({ onAuthComplete }: AuthPageProps) {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 
@@ -50,10 +54,10 @@ export function AuthPage({ onAuthComplete }) {
 		setLoading(true);
 		setError("");
 		try {
-			await googleSignInMutation();
+			const token = await googleSignInMutation();
 			// Authentication successful, call onAuthComplete if provided
-			if (onAuthComplete) {
-				onAuthComplete();
+			if (onAuthComplete && token) {
+				onAuthComplete(token);
 			}
 		} catch (err: any) {
 			console.error("Authentication error:", err);
