@@ -10,9 +10,7 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 	const handleGoogleSignIn = async () => {
 		try {
 			const result = await signInWithPopup(auth, googleProvider);
-			console.log(result);
 			const token = await result.user.getIdToken();
-			console.log("token", token);
 			return token;
 		} catch (error) {
 			console.log(error);
@@ -20,17 +18,21 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 	};
 
 	const googleSignInMutation = async () => {
-		const token = await handleGoogleSignIn();
-		await axios.post(
-			`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/google/sign-in`,
-			{},
-			{
-				headers: {
-					Authorization: `Bearer ${token}`
-				},
-				withCredentials: true
-			}
-		);
+		try {
+			const token = await handleGoogleSignIn();
+			await axios.post(
+				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/google/sign-in`,
+				{},
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					},
+					withCredentials: true
+				}
+			);
+		} catch (error) {
+			console.error("Error during Google sign-in mutation:", error);
+		}
 	};
 
 	return { googleSignInMutation };
