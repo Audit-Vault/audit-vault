@@ -5,6 +5,8 @@ type User = {
 	picture: string;
 	email: string;
 	name: string;
+	createdAt: string;
+	updatedAt: string;
 };
 
 type Instruction = {
@@ -39,6 +41,8 @@ type Server = {
 	instructions: Instruction[];
 	vulnerabilities: Vulnerability[];
 	scans: Scan[];
+	createdAt: string;
+	updatedAt: string;
 };
 
 type UserDoc = User & mongoose.Document;
