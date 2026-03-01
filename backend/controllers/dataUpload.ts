@@ -5,27 +5,33 @@ import { randomUUID } from "crypto";
 import { analyzeScanWithGemini } from "../services/gemini";
 
 // Temporary storage for partial uploads
-const uploadSessions = new Map<string, {
-	serverId: string;
-	serverName: string;
-	scanData: {
-		filePermissions?: any;
-		logs?: any;
-		users?: any;
-	};
-	vulnerabilities?: any[];
-	lastActivity: Date;
-}>();
+const uploadSessions = new Map<
+	string,
+	{
+		serverId: string;
+		serverName: string;
+		scanData: {
+			filePermissions?: any;
+			logs?: any;
+			users?: any;
+		};
+		vulnerabilities?: any[];
+		lastActivity: Date;
+	}
+>();
 
 // Clean up old sessions (older than 1 hour)
-setInterval(() => {
-	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-	for (const [sessionId, session] of uploadSessions.entries()) {
-		if (session.lastActivity < oneHourAgo) {
-			uploadSessions.delete(sessionId);
+setInterval(
+	() => {
+		const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+		for (const [sessionId, session] of uploadSessions.entries()) {
+			if (session.lastActivity < oneHourAgo) {
+				uploadSessions.delete(sessionId);
+			}
 		}
-	}
-}, 5 * 60 * 1000); // Run every 5 minutes
+	},
+	5 * 60 * 1000
+); // Run every 5 minutes
 
 /**
  * Initialize a new upload session
@@ -138,7 +144,8 @@ export const uploadScanData = async (req: Request, res: Response) => {
 					filePermissions: !!session.scanData.filePermissions,
 					logs: !!session.scanData.logs,
 					users: !!session.scanData.users,
-					vulnerabilities: !!session.vulnerabilities && session.vulnerabilities.length > 0
+					vulnerabilities:
+						!!session.vulnerabilities && session.vulnerabilities.length > 0
 				}
 			}
 		});
@@ -176,7 +183,8 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 		}
 
 		// Check if we have any data to save
-		const hasData = session.scanData.filePermissions ||
+		const hasData =
+			session.scanData.filePermissions ||
 			session.scanData.logs ||
 			session.scanData.users ||
 			(session.vulnerabilities && session.vulnerabilities.length > 0);
@@ -201,7 +209,11 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 		}
 
 		// Add new scan if we have scan data
-		if (session.scanData.filePermissions || session.scanData.logs || session.scanData.users) {
+		if (
+			session.scanData.filePermissions ||
+			session.scanData.logs ||
+			session.scanData.users
+		) {
 			server.scans.push({
 				date: new Date(),
 				filePermissions: session.scanData.filePermissions || {},
@@ -228,7 +240,7 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 
 		// Kick off Gemini analysis asynchronously so the response isn't blocked
 		analyzeScanWithGemini(scanData, vulnerabilities)
-			.then(async (report) => {
+			.then(async report => {
 				await Server.findByIdAndUpdate(serverId, {
 					$set: {
 						[`scans.${scanIndex}.report`]: report,
@@ -240,7 +252,9 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 						}))
 					}
 				});
-				console.log(`Gemini analysis complete for server: ${session.serverName}`);
+				console.log(
+					`Gemini analysis complete for server: ${session.serverName}`
+				);
 			})
 			.catch(err => console.error("Gemini analysis failed:", err));
 
@@ -330,7 +344,10 @@ export const getServer = async (req: Request, res: Response) => {
  */
 export const getAllServers = async (req: Request, res: Response) => {
 	try {
-		const servers = await Server.find({}).select('uuid name vulnerabilities scans');
+		const uuid = req.cookies.decoded_uid;
+		const servers = await Server.find({ uuid }).select(
+			"uuid name vulnerabilities scans"
+		);
 
 		res.status(200).json({
 			success: true,
@@ -340,7 +357,10 @@ export const getAllServers = async (req: Request, res: Response) => {
 				name: server.name,
 				totalScans: server.scans.length,
 				totalVulnerabilities: server.vulnerabilities.length,
-				lastScan: server.scans.length > 0 ? server.scans[server.scans.length - 1].date : null
+				lastScan:
+					server.scans.length > 0
+						? server.scans[server.scans.length - 1].date
+						: null
 			}))
 		});
 	} catch (error) {
