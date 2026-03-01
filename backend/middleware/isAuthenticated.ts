@@ -15,7 +15,7 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
 			secret,
 			(err: Error | null, decoded: string | jwt.JwtPayload | undefined) => {
 				if (err) {
-					console.log("<authentication.ts> middleware".yellow.bold, err);
+					console.log("<authentication.ts> middleware".red.bold, err);
 					res.status(401).json({ message: "Invalid token" });
 				} else {
 					const decoded_parsed: JwtPayload = decoded as JwtPayload;
