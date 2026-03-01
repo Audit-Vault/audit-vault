@@ -85,9 +85,9 @@ const Arrow = () => (
     ];
 
     const trust = [
-      { label: "Encrypted", desc: "End-to-end encryption for all scan data" },
-      { label: "Non-Invasive", desc: "Read-only access, no system changes" },
-      { label: "Privacy-First", desc: "Your data stays yours. No sharing." },
+      { label: "Intelligent", desc: "The agent does careful analysis before applying changes" },
+      { label: "Privacy-First", desc: "Your data stays yours, and is not shared with anyone." },
+      { label: "Safe", desc: "The models have to choose from pre-audited commands, preventing damage." },
     ];
 
     const badges = [
@@ -195,7 +195,7 @@ const Arrow = () => (
             maxWidth: 620, margin: "0 auto 40px",
           }}>
             Deploy a security agent with a single curl command. Get an AI-powered executive report
-            with risk scores, plain-language summaries, and actionable recommendations — all in minutes.
+            with risk scores, plain-language summaries, and actionable recommendations.
           </p>
 
           <div className="fade4" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}>

@@ -26,7 +26,7 @@ export function Dashboard() {
   const fetchServers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/data/servers', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/data/servers`, {
         credentials: 'include',
       });
 

@@ -51,7 +51,7 @@ export function ServerDetail() {
   const fetchServerDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/data/server/${serverId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/data/server/${serverId}`, {
         credentials: 'include',
       });
 

@@ -49,7 +49,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 # Backend API URL — override with AUDIT_VAULT_SERVER env variable
-BACKEND_URL = os.getenv("AUDIT_VAULT_SERVER", "http://localhost:4000")
+BACKEND_URL = os.getenv("AUDIT_VAULT_SERVER", "https://backend.auditvault.tech")
 
 # Path where the installer stores the user token on first run
 CONFIG_FILE = "/var/auditvault/server-id"

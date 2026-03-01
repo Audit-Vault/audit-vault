@@ -7,7 +7,7 @@ export function MainHeader() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:4000'}/api/auth/logout`, {
+      await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
