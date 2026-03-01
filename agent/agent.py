@@ -44,6 +44,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, UTC
 from pathlib import Path
+import urllib.error
 
 # ---------------------------------------------------------------------------
 # CONFIGURATION
@@ -371,7 +372,10 @@ def send_to_backend(server_id, server_name, scan_data):
         req = urllib.request.Request(
             init_url,
             data=init_payload,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "AuditVault-Agent/1.0"
+            },
             method="POST"
         )
         with urllib.request.urlopen(req, timeout=30) as response:
@@ -381,9 +385,22 @@ def send_to_backend(server_id, server_name, scan_data):
                 return False
             session_id = body.get("sessionId")
             print(f"  Session ID: {session_id}")
-    except Exception as e:
-        print(f"  [!] Initialization failed: {e}", file=sys.stderr)
+
+    except urllib.error.HTTPError as e:
+        # This allows you to read the JSON error body from the server even on 4xx/5xx errors
+        error_body = e.read().decode()
+        try:
+            data = json.loads(error_body)
+            print(f"  [!] Server Error ({e.code}): {data.get('message')}", file=sys.stderr)
+        except:
+            print(f"  [!] HTTP Error ({e.code}): {error_body}", file=sys.stderr)
         return False
+    except Exception as e:
+        print(f"  [!] Connection failed: {e}", file=sys.stderr)
+        return False
+
+
+
 
     # Step 2: Upload data in parts
     upload_url = f"{BACKEND_URL}/api/data/upload"
@@ -416,7 +433,10 @@ def send_to_backend(server_id, server_name, scan_data):
             req = urllib.request.Request(
                 upload_url,
                 data=upload_payload,
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "AuditVault-Agent/1.0"
+                },
                 method="POST"
             )
             with urllib.request.urlopen(req, timeout=30) as response:
@@ -439,7 +459,10 @@ def send_to_backend(server_id, server_name, scan_data):
         req = urllib.request.Request(
             finalize_url,
             data=finalize_payload,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "AuditVault-Agent/1.0"
+            },
             method="POST"
         )
         with urllib.request.urlopen(req, timeout=30) as response:
@@ -466,7 +489,11 @@ def check_for_instructions(server_id):
 
     url = f"{BACKEND_URL}/api/instructions/pending/{server_id}"
     try:
-        req = urllib.request.Request(url, method="GET")
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "AuditVault-Agent/1.0"},
+            method="GET"
+        )
         with urllib.request.urlopen(req, timeout=10) as response:
             body = json.loads(response.read().decode())
             return body.get("instructions", [])
@@ -503,7 +530,10 @@ def execute_instruction(instruction, server_id, server_name):
         req = urllib.request.Request(
             url,
             data=payload,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "AuditVault-Agent/1.0"
+            },
             method="POST"
         )
         urllib.request.urlopen(req, timeout=10)
