@@ -148,7 +148,7 @@ export const createInstruction = async (req: Request, res: Response) => {
 		}
 
 		// Find the server
-		const server = await Server.findOne({ uuid: serverId });
+		const server = await Server.findOne({ _id: serverId });
 
 		if (!server) {
 			return res.status(404).json({
