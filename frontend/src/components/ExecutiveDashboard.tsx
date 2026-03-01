@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Download, AlertTriangle, ChevronDown, ChevronUp, Shield, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Download, AlertTriangle, ChevronDown, ChevronUp, Shield, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { AuditReport } from '../App';
-import React from 'react';
 
 interface ExecutiveDashboardProps {
   report: AuditReport;

@@ -45,6 +45,8 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 					withCredentials: true
 				}
 			);
+
+			return token;
 		} catch (error: any) {
 			console.error("Error during Google sign-in mutation:", error);
 			throw error; // Re-throw to allow UI to handle the error

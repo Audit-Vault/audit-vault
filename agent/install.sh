@@ -20,24 +20,26 @@ else
 fi
 
 
-sudo touch /usr/bin/auditvault-agent
-sudo chown $USER /usr/bin/auditvault-agent
-sudo curl https://nextcloud.hnasheralneam.dev/index.php/s/agent-auditvault/download > /usr/bin/auditvault-agent
+sudo mkdir -p /var/auditvault
+sudo chmod 755 /var/auditvault
 
-sudo mkdir /var/auditvault
-sudo touch /var/auditvault/server-id
-sudo chown $USER /var/auditvault/server-id
-sudo echo $1 > /var/auditvault/server-id
-sudo tee /usr/lib/systemd/system/auditvault-agent.service > /dev/null <<EOF
+sudo curl -o /usr/bin/auditvault-agent https://nextcloud.hnasheralneam.dev/index.php/s/agent-auditvault/download
+sudo chmod +x /usr/bin/auditvault-agent
+
+echo "$1" | sudo tee /var/auditvault/server-id > /dev/null
+sudo chmod 644 /var/auditvault/server-id
+sudo tee /etc/systemd/system/auditvault-agent.service > /dev/null <<EOF
 [Unit]
-Description=Agent for AuditValult Secure
+Description=AuditVault Security Agent
+After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/var/auditvault
-ExecStart=python3 /usr/bin/auditvault-agent
-Restart=on-failure
+ExecStart=/usr/bin/python3 /usr/bin/auditvault-agent
+Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
@@ -47,14 +49,6 @@ sudo systemctl daemon-reload
 sudo systemctl enable auditvault-agent
 sudo systemctl start auditvault-agent
 
-printf "Connecting to your account...\n"
-
-# CONNECT TO THE ACCOUNT
-
-printf "Failed to connect.\n"
-exit
-
-printf "Finished installing.\n"
-printf "Starting a scan...\n"
-
-# TRIGGER A SCAN
+printf "\nFinished installing AuditVault Agent!\n"
+printf "The agent is now running and will perform security scans.\n"
+printf "Check your AuditVault dashboard to view results.\n"
