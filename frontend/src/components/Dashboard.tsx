@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Server, Plus, Shield, AlertTriangle, Clock, LogOut } from 'lucide-react';
+import { Server, Plus, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { MainHeader } from './MainHeader';
 
 interface ServerItem {
   id: string;
@@ -43,11 +44,6 @@ export function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('userToken');
-    navigate('/auth');
-  };
-
   const getSeverityColor = (count: number) => {
     if (count === 0) return 'text-green-400';
     if (count < 5) return 'text-yellow-400';
@@ -63,25 +59,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
-      {/* Header */}
-      <div className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-blue-400" />
-              <h1 className="text-2xl font-bold text-white">AuditVault</h1>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
+      <MainHeader />
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">

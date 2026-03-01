@@ -91,4 +91,21 @@ const getCurrentUser = async (req: Request, res: Response) => {
 	}
 };
 
-export { signInWithGoogle, getCurrentUser };
+const logout = async (req: Request, res: Response) => {
+	try {
+		res.clearCookie("auth-session", {
+			httpOnly: true,
+			sameSite: "strict",
+			secure: process.env.NODE_ENV !== "development"
+		});
+		return res.status(200).json({ message: "Logged out successfully" });
+	} catch (error) {
+		console.error(
+			"Error during logout:",
+			(error as Error).toString().red.bold
+		);
+		return res.status(500).json({ message: "Internal server error" });
+	}
+};
+
+export { signInWithGoogle, getCurrentUser, logout };

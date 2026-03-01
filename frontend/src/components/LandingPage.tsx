@@ -1,7 +1,6 @@
-import {CheckCircle2, ArrowRight } from 'lucide-react';
-import { Button } from './ui/button';
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCurrentUser } from './hooks/useCurrentUser';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -41,8 +40,10 @@ const Arrow = () => (
 
 
  export function LandingPage({ onGetStarted }: LandingPageProps) {
+  const navigate = useNavigate();
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const isLoggedIn = !isLoadingUser && currentUser;
 
-  
   function useIsMobile() {
     const [mobile, setMobile] = useState(window.innerWidth < 768);
     useEffect(() => {
@@ -52,10 +53,10 @@ const Arrow = () => (
     }, []);
     return mobile;
   }
-  
+
     const isMobile = useIsMobile();
-    const [hovered, setHovered] = useState(null);
-  
+    const [hovered, setHovered] = useState<number | null>(null);
+
     const features = [
       {
         icon: <Terminal />,
@@ -82,19 +83,19 @@ const Arrow = () => (
         desc: "Get a risk score, plain-English summary, prioritized issues, and a downloadable PDF report—all in minutes.",
       },
     ];
-  
+
     const trust = [
       { label: "Encrypted", desc: "End-to-end encryption for all scan data" },
       { label: "Non-Invasive", desc: "Read-only access, no system changes" },
       { label: "Privacy-First", desc: "Your data stays yours. No sharing." },
     ];
-  
+
     const badges = [
       "Powered by Your AI Choice",
       "Enterprise-Ready",
       "No Credit Card Required",
     ];
-  
+
     return (
       <div style={{
         minHeight: "100vh",
@@ -124,7 +125,7 @@ const Arrow = () => (
           .tl3 { animation-delay: 1.4s; }
           .tl4 { animation-delay: 1.7s; }
         `}</style>
-  
+
         {/* Nav */}
         <nav style={{
           padding: isMobile ? "16px 20px" : "20px 48px",
@@ -146,18 +147,18 @@ const Arrow = () => (
             </span>
           </div>
           {!isMobile && (
-            <button onClick={onGetStarted} className="cta-btn" style={{
+            <button onClick={() => navigate(isLoggedIn ? '/dashboard' : '/auth')} className="cta-btn" style={{
               padding: "9px 22px", borderRadius: 9, fontSize: 14, fontWeight: 600,
               background: "linear-gradient(135deg, #0ea5e9, #38bdf8)",
               border: "none", color: "#fff", cursor: "pointer",
               boxShadow: "0 4px 20px rgba(56,189,248,0.3)", transition: "all 0.2s",
               fontFamily: "inherit",
             }}>
-              Get started free
+              {isLoggedIn ? 'Go to Dashboard' : 'Get started free'}
             </button>
           )}
         </nav>
-  
+
         {/* Hero */}
         <section style={{ padding: isMobile ? "56px 20px 48px" : "80px 48px 72px", textAlign: "center", maxWidth: 900, margin: "0 auto" }}>
           <div className="fade1" style={{
@@ -170,7 +171,7 @@ const Arrow = () => (
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#38bdf8", animation: "pulse-glow 2s infinite" }}/>
             AI-POWERED SERVER SECURITY AUDITING
           </div>
-  
+
           <h1 className="fade2" style={{
           fontFamily: "'Playfair Display', Georgia, serif",
           fontSize: isMobile ? 42 : 72,
@@ -188,7 +189,7 @@ const Arrow = () => (
             Speak Plain English
           </span>
         </h1>
-  
+
           <p className="fade3" style={{
             fontSize: isMobile ? 16 : 19, color: "#94a3b8", lineHeight: 1.75,
             maxWidth: 620, margin: "0 auto 40px",
@@ -196,9 +197,9 @@ const Arrow = () => (
             Deploy a security agent with a single curl command. Get an AI-powered executive report
             with risk scores, plain-language summaries, and actionable recommendations — all in minutes.
           </p>
-  
+
           <div className="fade4" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}>
-            <button onClick={onGetStarted} className="cta-btn" style={{
+            <button onClick={() => navigate(isLoggedIn ? '/dashboard' : '/auth')} className="cta-btn" style={{
               padding: isMobile ? "14px 28px" : "16px 36px",
               borderRadius: 12, fontSize: isMobile ? 15 : 17, fontWeight: 700,
               background: "linear-gradient(135deg, #0ea5e9, #38bdf8)",
@@ -206,11 +207,11 @@ const Arrow = () => (
               boxShadow: "0 6px 28px rgba(56,189,248,0.35)", transition: "all 0.2s",
               fontFamily: "inherit", display: "inline-flex", alignItems: "center",
             }}>
-              Start Your First Audit
+              {isLoggedIn ? 'Go to Dashboard' : 'Start Your First Audit'}
               <span className="arrow-icon" style={{ width: 18, height: 18 }}><Arrow /></span>
             </button>
           </div>
-  
+
           {/* Badges */}
           <div className="fade4" style={{
             display: "flex", flexWrap: "wrap", justifyContent: "center",
@@ -223,7 +224,7 @@ const Arrow = () => (
               </div>
             ))}
           </div>
-  
+
           {/* Terminal */}
           <div className="fade5" style={{
             background: "rgba(15,23,42,0.7)", backdropFilter: "blur(12px)",
@@ -252,7 +253,7 @@ const Arrow = () => (
             </div>
           </div>
         </section>
-  
+
         {/* How It Works */}
         <section style={{ padding: isMobile ? "48px 20px" : "72px 48px", maxWidth: 1100, margin: "0 auto" }}>
           <h3 style={{
@@ -262,7 +263,7 @@ const Arrow = () => (
           }}>
             How It Works
           </h3>
-  
+
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
@@ -301,7 +302,7 @@ const Arrow = () => (
             ))}
           </div>
         </section>
-  
+
         {/* Trust / Security */}
         <section style={{ padding: isMobile ? "0 20px 64px" : "0 48px 96px", maxWidth: 1100, margin: "0 auto" }}>
           <div style={{
