@@ -36,8 +36,9 @@ type Scan = {
 };
 
 type Server = {
+	_id: string;
 	name: string;
-	uuid: string;
+	userId: string;
 	instructions: Instruction[];
 	vulnerabilities: Vulnerability[];
 	scans: Scan[];

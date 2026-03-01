@@ -41,7 +41,7 @@ interface Instruction {
 interface ServerData {
 	_id: string;
 	name: string;
-	uuid: string;
+	userId: string;
 	vulnerabilities: Vulnerability[];
 	scans: Scan[];
 	createdAt: string;

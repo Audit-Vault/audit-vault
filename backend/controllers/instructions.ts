@@ -16,8 +16,8 @@ export const getPendingInstructions = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server by UUID (agent uses UUID token)
-		const server = await Server.findOne({ uuid: serverId });
+		// Find the server by _id (agent uses its token which is the server's _id)
+		const server = await Server.findOne({ _id: serverId });
 
 		if (!server) {
 			return res.status(404).json({
@@ -68,8 +68,8 @@ export const completeInstruction = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server by UUID (agent uses UUID token)
-		const server = await Server.findOne({ uuid: serverId });
+		// Find the server by _id (agent uses its token which is the server's _id)
+		const server = await Server.findOne({ _id: serverId });
 
 		if (!server) {
 			return res.status(404).json({

@@ -50,13 +50,14 @@ export const initializeUpload = async (req: Request, res: Response) => {
 		// Check if server already exists (by name or provided ID)
 		let existingServer;
 		if (providedServerId) {
-			existingServer = await Server.findOne({ uuid: providedServerId });
+			// providedServerId is the agent token (_id), not user uuid
+			existingServer = await Server.findOne({ _id: providedServerId });
 		} else {
 			existingServer = await Server.findOne({ name: serverName });
 		}
 
-		// Use existing server ID or generate a new UUID
-		const serverId = existingServer?.uuid || providedServerId || randomUUID();
+		// Use existing server ID (agent token) or generate a new UUID
+		const serverId = existingServer?._id || providedServerId || randomUUID();
 
 		// Generate a unique session ID
 		const sessionId = new mongoose.Types.ObjectId().toString();
@@ -165,9 +166,9 @@ export const uploadScanData = async (req: Request, res: Response) => {
 export const finalizeUpload = async (req: Request, res: Response) => {
 	try {
 		const { sessionId } = req.body;
-		// Note: uuid is optional for agent uploads (not authenticated)
+		// Note: userId is optional for agent uploads (not authenticated)
 		// Server can be linked to a user later through the UI
-		const uuid = req.cookies.decoded_uid || null;
+		const userId = req.cookies.decoded_uid || null;
 
 		if (!sessionId) {
 			return res.status(400).json({
@@ -206,7 +207,7 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 			server = new Server({
 				_id: session.serverId,
 				name: session.serverName,
-				uuid, // User ID (optional for agent uploads)
+				userId, // User ID (optional for agent uploads)
 				vulnerabilities: session.vulnerabilities || [],
 				scans: []
 			});
@@ -318,10 +319,10 @@ export const getScanReport = async (req: Request, res: Response) => {
  */
 export const getServer = async (req: Request, res: Response) => {
 	try {
-		const uuid = req.cookies.decoded_uid;
+		const userId = req.cookies.decoded_uid;
 		const { serverId } = req.params;
 
-		const server = await Server.findOne({ _id: serverId, uuid: uuid });
+		const server = await Server.findOne({ _id: serverId, userId: userId });
 
 		if (!server) {
 			return res.status(404).json({
@@ -349,9 +350,9 @@ export const getServer = async (req: Request, res: Response) => {
  */
 export const getAllServers = async (req: Request, res: Response) => {
 	try {
-		const uuid = req.cookies.decoded_uid;
-		const servers = await Server.find({ uuid }).select(
-			"uuid name vulnerabilities scans"
+		const userId = req.cookies.decoded_uid;
+		const servers = await Server.find({ userId }).select(
+			"userId name vulnerabilities scans"
 		);
 
 		res.status(200).json({
@@ -359,7 +360,7 @@ export const getAllServers = async (req: Request, res: Response) => {
 			count: servers.length,
 			servers: servers.map(server => ({
 				id: server._id,
-				uuid: server.uuid,
+				userId: (server as any).userId,
 				name: server.name,
 				totalScans: server.scans.length,
 				totalVulnerabilities: server.vulnerabilities.length,
@@ -422,7 +423,7 @@ export const cancelUpload = async (req: Request, res: Response) => {
 export const registerServer = async (req: Request, res: Response) => {
 	try {
 		const { serverName } = req.body;
-		const uuid = req.cookies.decoded_uid;
+		const userId = req.cookies.decoded_uid;
 
 		if (!serverName) {
 			return res.status(400).json({
@@ -431,13 +432,13 @@ export const registerServer = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Check if server with this name already exists
-		const existingServer = await Server.findOne({ name: serverName });
+		// Check if server with this name already exists for this user
+		const existingServer = await Server.findOne({ name: serverName, userId });
 
 		if (existingServer) {
 			return res.status(200).json({
 				success: true,
-				serverId: existingServer.uuid,
+				serverId: existingServer._id,
 				serverName: existingServer.name,
 				message: "Server already exists"
 			});
@@ -448,7 +449,7 @@ export const registerServer = async (req: Request, res: Response) => {
 		const server = new Server({
 			_id: serverId,
 			name: serverName,
-			uuid,
+			userId,
 			vulnerabilities: [],
 			scans: [],
 			instructions: []
@@ -458,7 +459,7 @@ export const registerServer = async (req: Request, res: Response) => {
 
 		res.status(201).json({
 			success: true,
-			serverId: server.uuid,
+			serverId: server._id,
 			serverName: server.name,
 			message: "Server registered successfully"
 		});

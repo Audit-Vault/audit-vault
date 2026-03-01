@@ -3,14 +3,14 @@ import mongoose from "mongoose";
 const serverSchema = new mongoose.Schema(
 	{
 		_id: {
-			type: String
+			type: String // Server's unique identifier (agent token/UUID)
 		},
 		name: {
 			type: String
 		},
-		uuid: {
+		userId: {
 			type: String,
-			required: false // Optional: allows agent uploads without user assignment
+			required: false // User ID who owns this server (optional for agent uploads)
 		},
 		instructions: [
 			{

@@ -10,7 +10,7 @@ import { isAuthenticated } from "../middleware/isAuthenticated";
 const router = express.Router();
 
 // Agent endpoints - for the agent to poll and update instructions
-// Note: No authentication required - agents use serverId as UUID
+// Note: No authentication required - agents use serverId as their server token (_id)
 router.get("/pending/:serverId", getPendingInstructions);
 router.post("/complete/:serverId/:instructionId", completeInstruction);
 
