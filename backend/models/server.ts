@@ -9,7 +9,8 @@ const serverSchema = new mongoose.Schema(
 			type: String
 		},
 		uuid: {
-			type: String
+			type: String,
+			required: false // Optional: allows agent uploads without user assignment
 		},
 		instructions: [
 			{

@@ -165,7 +165,9 @@ export const uploadScanData = async (req: Request, res: Response) => {
 export const finalizeUpload = async (req: Request, res: Response) => {
 	try {
 		const { sessionId } = req.body;
-		const uuid = req.cookies.decoded_uid;
+		// Note: uuid is optional for agent uploads (not authenticated)
+		// Server can be linked to a user later through the UI
+		const uuid = req.cookies.decoded_uid || null;
 
 		if (!sessionId) {
 			return res.status(400).json({
@@ -197,14 +199,14 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find or create server
-		let server = await Server.findOne({ uuid: session.serverId });
+		// Find or create server (by server ID, not user ID)
+		let server = await Server.findById(session.serverId);
 
 		if (!server) {
 			server = new Server({
 				_id: session.serverId,
 				name: session.serverName,
-				uuid,
+				uuid, // User ID (optional for agent uploads)
 				vulnerabilities: session.vulnerabilities || [],
 				scans: []
 			});
