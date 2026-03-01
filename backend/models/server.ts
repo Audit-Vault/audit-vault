@@ -21,13 +21,20 @@ const serverSchema = new mongoose.Schema({
 		name: String,
 		description: String,
 		severity: String,
+		recommendation: String,
 		data: mongoose.Schema.Types.Mixed // includes logs and permissions related to it
 	}],
 	scans: [{
 		date: Date,
 		filePermissions: mongoose.Schema.Types.Mixed,
 		logs: mongoose.Schema.Types.Mixed,
-		users: mongoose.Schema.Types.Mixed
+		users: mongoose.Schema.Types.Mixed,
+		report: {
+			score: Number,
+			riskLevel: String,
+			summary: String,
+			actionPlan: [String]
+		}
 	}]
 }, {
 	timestamps: true
