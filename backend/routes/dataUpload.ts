@@ -29,7 +29,7 @@ router.post("/finalize", finalizeUpload);
 router.post("/cancel", cancelUpload);
 
 // Get server information by ID (protected)
-router.get("/server/:serverId", isAuthenticated, getServer);
+router.get("/server/:serverId", getServer);
 
 // Get all servers (protected)
 router.get("/servers", isAuthenticated, getAllServers);

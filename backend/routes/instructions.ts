@@ -5,6 +5,7 @@ import {
 	createInstruction,
 	getInstructionHistory
 } from "../controllers/instructions";
+import { isAuthenticated } from "../middleware/isAuthenticated";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.get("/pending/:serverId", getPendingInstructions);
 router.post("/complete/:serverId/:instructionId", completeInstruction);
 
 // Admin endpoints - for creating and viewing instructions
-router.post("/create/:serverId", createInstruction);
+router.post("/create/:serverId", isAuthenticated, createInstruction);
 router.get("/history/:serverId", getInstructionHistory);
 
 export default router;
