@@ -8,6 +8,7 @@ import { Instruction } from "../types";
 export const getPendingInstructions = async (req: Request, res: Response) => {
 	try {
 		const { serverId } = req.params;
+		const uuid = req.cookies.decoded_uid;
 
 		if (!serverId) {
 			return res.status(400).json({
@@ -33,7 +34,8 @@ export const getPendingInstructions = async (req: Request, res: Response) => {
 
 		res.status(200).json({
 			success: true,
-			serverId: server.uuid,
+			serverId: server._id,
+			uuid,
 			serverName: server.name,
 			instructions: pendingInstructions.map((inst: any) => ({
 				id: inst._id,
@@ -206,6 +208,7 @@ export const createInstruction = async (req: Request, res: Response) => {
 export const getInstructionHistory = async (req: Request, res: Response) => {
 	try {
 		const { serverId } = req.params;
+		const uuid = req.cookies.decoded_uid;
 		const { limit = "50" } = req.query;
 
 		if (!serverId) {
@@ -232,7 +235,8 @@ export const getInstructionHistory = async (req: Request, res: Response) => {
 
 		res.status(200).json({
 			success: true,
-			serverId: server.uuid,
+			serverId: server._id,
+			uuid,
 			serverName: server.name,
 			total: allInstructions.length,
 			instructions: allInstructions.map((inst: any) => ({
