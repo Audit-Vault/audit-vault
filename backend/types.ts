@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 type User = {
 	_id: string;
 	picture: string;
@@ -39,4 +41,6 @@ type Server = {
 	scans: Scan[];
 };
 
-export { User, Instruction, Vulnerability, Scan, Server };
+type UserDoc = User & mongoose.Document;
+
+export { User, Instruction, Vulnerability, Scan, Server, UserDoc };
