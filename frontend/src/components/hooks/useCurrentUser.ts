@@ -6,7 +6,7 @@ export function useCurrentUser() {
 		queryKey: ["currentUser"],
 		queryFn: async () => {
 			const response = await axios.get(
-				`${import.meta.env.VITE_BACKEND_URL}/api/auth/current-user`,
+				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/current-user`,
 				{ withCredentials: true }
 			);
 
