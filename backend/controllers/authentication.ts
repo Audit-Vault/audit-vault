@@ -5,14 +5,15 @@ import jwt from "jsonwebtoken";
 import { UserDoc, User as UserType } from "../types";
 
 function createCookie(user_id: string, res: Response) {
-	const payload = {
-		user_id
-	};
-	const secretKey: string = Math.floor(
-		Math.random() * Number(new Date())
-	).toString();
-	const token = jwt.sign(payload, secretKey, { expiresIn: "3d" });
-	res.cookie("auth-session", token, { httpOnly: true, maxAge: 259200000 }); // 3 days in milliseconds
+	const token = jwt.sign({ user_id }, process.env.JWT_SECRET!, {
+		expiresIn: "15d"
+	});
+	res.cookie("auth-session", token, {
+		maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+		httpOnly: true,
+		sameSite: "strict",
+		secure: process.env.NODE_ENV !== "development"
+	});
 }
 
 const signInWithGoogle = async (req: Request, res: Response) => {
@@ -24,11 +25,17 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 				.auth()
 				.verifyIdToken(authHeader.replace("Bearer ", ""));
 
-			// first check if a new user exists on MongoDB
-			const user: UserType | null = await User.findOne({
+			// check if a new user exists on MongoDB
+			const user: UserType | null = (await User.findOne({
 				_id: decodedToken.uid
-			});
-			if (user) return createCookie(user._id, res);
+			})
+				.select("-__v")
+				.lean()) as UserType | null;
+
+			if (user) {
+				createCookie(user._id, res);
+				return res.status(200).json({ user });
+			}
 
 			// if not, create a new user
 			const newUser: UserDoc = new User({
@@ -56,7 +63,7 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 
 const getCurrentUser = async (req: Request, res: Response) => {
 	try {
-		const user = await User.findById(req.user._id);
+		const user = await User.findById({ _id: req.cookies.decoded_uid });
 		if (user) {
 			return res.status(200).json({ user });
 		} else {
