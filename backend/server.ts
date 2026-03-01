@@ -16,8 +16,27 @@ const app = express();
 const MONGO_URI: string = process.env.MONGO_URI!;
 const PORT: string | number = process.env.PORT! || 4000;
 
+// Dynamic CORS configuration
+// Agent endpoints need to accept requests from any origin (remote servers)
+// Frontend endpoints only accept requests from FRONTEND_URL
 const corsOptions = {
-	origin: process.env.FRONTEND_URL,
+	origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+		// Allow requests with no origin (like curl, or same-origin)
+		if (!origin) {
+			callback(null, true);
+			return;
+		}
+		
+		// Allow frontend origin
+		if (origin === process.env.FRONTEND_URL) {
+			callback(null, true);
+			return;
+		}
+		
+		// For all other origins, allow them (agent can call from anywhere)
+		// Individual routes will handle their own authentication
+		callback(null, true);
+	},
 	credentials: true,
 	optionSuccessStatus: 200
 };

@@ -42,7 +42,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -337,7 +337,7 @@ def collect_all():
         "users": users,
         "services": services,
         "hostname": hostname,
-        "scan_timestamp": datetime.utcnow().isoformat() + "Z",
+        "scan_timestamp": datetime.now(UTC).isoformat(),
     }
 
 
