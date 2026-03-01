@@ -27,8 +27,13 @@ const serverSchema = new mongoose.Schema({
 	scans: [{
 		date: Date,
 		filePermissions: mongoose.Schema.Types.Mixed,
-		logs: mongoose.Schema.Types.Mixed,
+		sshConfig: mongoose.Schema.Types.Mixed,
+		openPorts: mongoose.Schema.Types.Mixed,
 		users: mongoose.Schema.Types.Mixed,
+		services: mongoose.Schema.Types.Mixed,
+		hostname: String,
+		scanTimestamp: String,
+		logs: mongoose.Schema.Types.Mixed,
 		report: {
 			score: Number,
 			riskLevel: String,

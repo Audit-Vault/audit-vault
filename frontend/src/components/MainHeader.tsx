@@ -25,10 +25,12 @@ export function MainHeader() {
     <div className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
+          <a href="/" className="inline-flex items-center text-white text-lg font-bold">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-blue-400" />
             <h1 className="text-2xl font-bold text-white">AuditVault</h1>
           </div>
+          </a>
           <Button
             onClick={handleLogout}
             variant="ghost"

@@ -10,10 +10,10 @@ printf "/_/  |_\\__,_/\\__,_/_/\\__/ |___/\\__,_/\\__,_/_/\\__/  \n";
 printf "                                                   \n";
 printf "Intelligent and automated system security scanning\n"
 
-if command -v dnf &> /dev/null; then
-   sudo dnf install python3
-elif command -v apt &> /dev/null; then
+if command -v apt &> /dev/null; then
    sudo apt install python3
+elif command -v dnf &> /dev/null; then
+   sudo dnf install python3
 else
    echo "Failed to install Python3";
    exit

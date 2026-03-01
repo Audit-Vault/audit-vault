@@ -39,6 +39,7 @@ import pwd
 import grp
 import subprocess
 import sys
+import time
 import urllib.request
 import urllib.error
 from datetime import datetime
@@ -57,8 +58,8 @@ CONFIG_FILE = "/var/auditvault/server-id"
 # How often it checks for new scans/commands
 POLL_INTERVAL = int(os.getenv("AUDIT_VAULT_POLL_INTERVAL", "30"))  # every 30 seconds
 
-# Key used to identify this server with the backend
-SERVER_ID
+# Key used to identify this server with the backend (loaded at runtime)
+SERVER_ID = None
 
 def load_token():
     """
@@ -353,69 +354,136 @@ def collect_all():
 # SUBMISSION
 # ---------------------------------------------------------------------------
 
-def send_to_backend(token, server_name, scan_data):
+def send_to_backend(server_id, server_name, scan_data):
     """
-    POST the collected scan data to the Audit Vault backend.
+    POST the collected scan data to the Audit Vault backend using chunked uploads.
 
-    The backend endpoint is POST /api/instructions/scan. On success it returns:
-      { "message": "...", "scanId": "<mongodb-id>" }
-
-    The frontend then polls GET /api/instructions/scan/<token> until the
-    status field becomes "complete", at which point the report is available.
+    Uses the multi-step upload flow:
+      1. POST /api/data/initialize - Get session ID
+      2. POST /api/data/upload (multiple times) - Upload data in parts
+      3. POST /api/data/finalize - Complete upload and trigger analysis
 
     Uses urllib.request from the standard library — no pip install needed.
 
     Returns True on success, False on any error.
     """
-    url = f"{BACKEND_URL}/api/instructions/scan"
 
-    payload = json.dumps({
-        "token": token,
-        "serverName": server_name,
-        "data": scan_data,
+    # Step 1: Initialize upload session
+    print("  [1/4] Initializing upload session...")
+    init_url = f"{BACKEND_URL}/api/data/initialize"
+    init_payload = json.dumps({
+        "serverId": server_id,
+        "serverName": server_name
     }).encode("utf-8")
 
-    req = urllib.request.Request(
-        url,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
     try:
+        req = urllib.request.Request(
+            init_url,
+            data=init_payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
         with urllib.request.urlopen(req, timeout=30) as response:
             body = json.loads(response.read().decode())
-            print(f"  Scan submitted — ID: {body.get('scanId')}")
-            return True
-    except urllib.error.HTTPError as e:
-        print(f"  [!] HTTP {e.code}: {e.read().decode()}", file=sys.stderr)
-    except urllib.error.URLError as e:
-        print(f"  [!] Connection error: {e.reason}", file=sys.stderr)
+            if not body.get("success"):
+                print(f"  [!] Failed to initialize: {body.get('message')}", file=sys.stderr)
+                return False
+            session_id = body.get("sessionId")
+            print(f"  Session ID: {session_id}")
     except Exception as e:
-        print(f"  [!] Unexpected error: {e}", file=sys.stderr)
+        print(f"  [!] Initialization failed: {e}", file=sys.stderr)
+        return False
 
-    return False
+    # Step 2: Upload data in parts
+    upload_url = f"{BACKEND_URL}/api/data/upload"
+
+    # Map agent data structure to backend expected structure
+    data_parts = [
+        ("filePermissions", scan_data.get("permissions", [])),
+        ("users", scan_data.get("users", [])),
+    ]
+
+    # Add logs if we have any scan metadata
+    logs_data = {
+        "sshConfig": scan_data.get("ssh", {}),
+        "openPorts": scan_data.get("open_ports", []),
+        "services": scan_data.get("services", []),
+        "hostname": scan_data.get("hostname", server_name),
+        "scanTimestamp": scan_data.get("scan_timestamp")
+    }
+    data_parts.append(("logs", logs_data))
+
+    for idx, (data_type, data) in enumerate(data_parts, start=2):
+        print(f"  [{idx}/4] Uploading {data_type}...")
+        upload_payload = json.dumps({
+            "sessionId": session_id,
+            "dataType": data_type,
+            "data": data
+        }).encode("utf-8")
+
+        try:
+            req = urllib.request.Request(
+                upload_url,
+                data=upload_payload,
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=30) as response:
+                body = json.loads(response.read().decode())
+                if not body.get("success"):
+                    print(f"  [!] Failed to upload {data_type}: {body.get('message')}", file=sys.stderr)
+                    return False
+        except Exception as e:
+            print(f"  [!] Upload failed for {data_type}: {e}", file=sys.stderr)
+            return False
+
+    # Step 3: Finalize upload
+    print("  [4/4] Finalizing upload...")
+    finalize_url = f"{BACKEND_URL}/api/data/finalize"
+    finalize_payload = json.dumps({
+        "sessionId": session_id
+    }).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(
+            finalize_url,
+            data=finalize_payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=30) as response:
+            body = json.loads(response.read().decode())
+            if not body.get("success"):
+                print(f"  [!] Finalization failed: {body.get('message')}", file=sys.stderr)
+                return False
+            server_info = body.get("server", {})
+            print(f"  ✓ Upload complete — {server_info.get('name')}, Scan #{server_info.get('totalScans')}")
+            return True
+    except Exception as e:
+        print(f"  [!] Finalization failed: {e}", file=sys.stderr)
+        return False
 
 
 # ---------------------------------------------------------------------------
 # Instructions
 # ---------------------------------------------------------------------------
 
-def check_for_instructions():
+def check_for_instructions(server_id):
     """Check server for pending instructions"""
-    if not SERVER_ID:
+    if not server_id:
         return []
 
+    url = f"{BACKEND_URL}/api/instructions/pending/{server_id}"
     try:
-        import requests
-        response = requests.get(f"{SERVER_URL}/api/instructions/pending/{SERVER_ID}", timeout=10)
-        if response.ok:
-            return response.json().get("instructions", [])
-    except:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=10) as response:
+            body = json.loads(response.read().decode())
+            return body.get("instructions", [])
+    except Exception:
         pass
     return []
 
-def execute_instruction(instruction):
+def execute_instruction(instruction, server_id, server_name):
     """Execute an instruction"""
     inst_type = instruction.get("type")
     inst_id = instruction.get("id")
@@ -426,18 +494,29 @@ def execute_instruction(instruction):
 
     if inst_type == "trigger_scan":
         # Run the scan
-        main()
-        result = {"success": True, "message": "Scan completed"}
+        try:
+            scan_data = collect_all()
+            success = send_to_backend(server_id, server_name, scan_data)
+            result = {"success": success, "message": "Scan completed" if success else "Scan failed"}
+        except Exception as e:
+            result = {"success": False, "message": str(e)}
 
     # Report completion
+    url = f"{BACKEND_URL}/api/instructions/complete/{server_id}/{inst_id}"
+    payload = json.dumps({
+        "result": result,
+        "error": None if result["success"] else result.get("message", "Failed")
+    }).encode("utf-8")
+
     try:
-        import requests
-        requests.post(
-            f"{SERVER_URL}/api/instructions/complete/{SERVER_ID}/{inst_id}",
-            json={"result": result, "error": None if result["success"] else "Failed"},
-            timeout=10
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
         )
-    except:
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
         pass
 
 
@@ -445,7 +524,8 @@ def execute_instruction(instruction):
 # ENTRY POINT
 # ---------------------------------------------------------------------------
 
-def scan():
+def scan(server_id, server_name):
+    """Run a security scan and send data to backend"""
     print("Starting scan...")
 
     # Collect
@@ -453,29 +533,31 @@ def scan():
     scan_data = collect_all()
     print()
 
-    # Send (should be done in segments!)
+    # Send
     print("Sending data to backend...")
-    success = send_to_backend(token, server_name, scan_data)
+    success = send_to_backend(server_id, server_name, scan_data)
 
     if success:
         print("\nDone. Your security report will be ready in ~30 seconds.")
         print("Check your AuditVault dashboard to view the results.")
-        sys.exit(0)
+        return True
     else:
         print("\nFailed to submit scan. Check the errors above.", file=sys.stderr)
-        sys.exit(1)
+        return False
 
 def main():
+    global SERVER_ID
+
     print("AuditVault Agent")
     print("-" * 40)
 
-    # Resolve token
+    # Resolve token (server ID)
     SERVER_ID = load_token()
     if not SERVER_ID:
         print(
             "Error: no token found.\n"
-            "Pass it as an argument:       python3 agent.py <token>\n"
-            "Or set an env variable:       AUDIT_VAULT_TOKEN=<token>\n"
+            "Pass it as an argument:       python3 agent.py <server-id>\n"
+            "Or set an env variable:       AUDIT_VAULT_TOKEN=<server-id>\n"
             f"Or store it in:              {CONFIG_FILE}",
             file=sys.stderr,
         )
@@ -489,24 +571,34 @@ def main():
             ["hostname"], capture_output=True, text=True
         ).stdout.strip()
 
-    print(f"Token:   {SERVER_ID[:12]}...")
-    print(f"Server:  {server_name}")
-    print(f"Backend: {BACKEND_URL}")
+    print(f"Server ID: {SERVER_ID[:12]}...")
+    print(f"Server:    {server_name}")
+    print(f"Backend:   {BACKEND_URL}")
     print()
 
     # Warn if not root — some files will be unreadable
     if os.geteuid() != 0:
         print("Warning: not running as root — some files may be unreadable.\n")
 
-    scan()
+    # Run initial scan
+    scan(SERVER_ID, server_name)
 
+    # Polling loop for instructions
+    print("\nEntering polling mode for instructions...")
     while True:
-        # Check for instructions
-        instructions = check_for_instructions()
-        for inst in instructions:
-            execute_instruction(inst)
+        try:
+            # Check for instructions
+            instructions = check_for_instructions(SERVER_ID)
+            for inst in instructions:
+                execute_instruction(inst, SERVER_ID, server_name)
 
-        time.sleep(POLL_INTERVAL)
+            time.sleep(POLL_INTERVAL)
+        except KeyboardInterrupt:
+            print("\nShutting down agent...")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error in polling loop: {e}", file=sys.stderr)
+            time.sleep(POLL_INTERVAL)
 
 
 if __name__ == "__main__":
