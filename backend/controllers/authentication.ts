@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import admin from "../config/firebase";
 import { User } from "../models/user";
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { User as UserType } from "../types";
+import { UserDoc, User as UserType } from "../types";
 
 function createCookie(user_id: string, res: Response) {
 	const payload = {
@@ -32,14 +31,15 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 			if (user) return createCookie(user._id, res);
 
 			// if not, create a new user
-			const newUser = new User({
+			const newUser: UserDoc = new User({
 				_id: decodedToken.uid,
 				email: decodedToken.email,
 				name: decodedToken.name,
 				picture: decodedToken.picture
-			});
+			}) as unknown as UserDoc;
 			await newUser.save();
 
+			createCookie(newUser._id, res);
 			return res
 				.status(200)
 				.json({ message: "User signed in successfully", user: newUser });
