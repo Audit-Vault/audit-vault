@@ -20,6 +20,12 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 	const googleSignInMutation = async () => {
 		try {
 			const token = await handleGoogleSignIn();
+
+			if (!token) {
+				console.error("No token generated from Firebase");
+				return;
+			}
+
 			await axios.post(
 				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/google/sign-in`,
 				{},

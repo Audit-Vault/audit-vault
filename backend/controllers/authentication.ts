@@ -58,6 +58,13 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 			"Error during Google sign-in inside of signInWithGoogle function:",
 			(error as Error).toString().red.bold
 		);
+
+		return res
+			.status(500)
+			.json({
+				message: "Internal Server Error",
+				error: (error as Error).message
+			});
 	}
 };
 
