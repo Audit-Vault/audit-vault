@@ -6,6 +6,7 @@ import authRoutes from "./routes/authentication";
 import cors from "cors";
 import instructionsRoutes from "./routes/instructions";
 import dataUploadRoutes from "./routes/dataUpload";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 colors.enable();
@@ -22,9 +23,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/instructions", instructionsRoutes);
