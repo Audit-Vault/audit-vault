@@ -10,11 +10,11 @@ import { isAuthenticated } from "../middleware/isAuthenticated";
 const router = express.Router();
 
 // Agent endpoints - for the agent to poll and update instructions
-router.get("/pending/:serverId", getPendingInstructions);
+router.get("/pending/:serverId", isAuthenticated, getPendingInstructions);
 router.post("/complete/:serverId/:instructionId", completeInstruction);
 
 // Admin endpoints - for creating and viewing instructions
 router.post("/create/:serverId", isAuthenticated, createInstruction);
-router.get("/history/:serverId", getInstructionHistory);
+router.get("/history/:serverId", isAuthenticated, getInstructionHistory);
 
 export default router;
