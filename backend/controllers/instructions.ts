@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Server } from "../models/server";
+import { Instruction } from "../types";
 
 /**
  * Get pending instructions for a server
@@ -78,9 +79,9 @@ export const completeInstruction = async (req: Request, res: Response) => {
 		}
 
 		// Find the instruction and update it
-		const instruction = server.instructions?.find(
+		const instruction: Instruction = server.instructions?.find(
 			(inst: any) => inst._id.toString() === instructionId
-		);
+		) as unknown as Instruction;
 
 		if (!instruction) {
 			return res.status(404).json({
@@ -133,7 +134,12 @@ export const createInstruction = async (req: Request, res: Response) => {
 		}
 
 		// Validate instruction type
-		const validTypes = ["trigger_scan", "update_config", "restart_agent", "collect_logs"];
+		const validTypes = [
+			"trigger_scan",
+			"update_config",
+			"restart_agent",
+			"collect_logs"
+		];
 		if (!validTypes.includes(type)) {
 			return res.status(400).json({
 				success: false,
@@ -168,7 +174,9 @@ export const createInstruction = async (req: Request, res: Response) => {
 		await server.save();
 
 		// Get the last added instruction (with its _id)
-		const addedInstruction = server.instructions[server.instructions.length - 1];
+		const addedInstruction: Instruction = server.instructions[
+			server.instructions.length - 1
+		] as unknown as Instruction;
 
 		res.status(201).json({
 			success: true,

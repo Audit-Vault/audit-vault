@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 const serverSchema = new mongoose.Schema({
 	name: String,
 	uuid: String, // uuid
-
 	instructions: [{
 		type: String,
 		description: String,
