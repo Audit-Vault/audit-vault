@@ -13,7 +13,9 @@ const serverSchema = new mongoose.Schema(
 		},
 		instructions: [
 			{
-				type: String,
+				type: {
+					type: String
+				},
 				description: String,
 				data: mongoose.Schema.Types.Mixed,
 				status: {

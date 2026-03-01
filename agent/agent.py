@@ -42,7 +42,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -62,14 +62,6 @@ POLL_INTERVAL = int(os.getenv("AUDIT_VAULT_POLL_INTERVAL", "30"))  # every 30 se
 SERVER_ID = None
 
 def load_token():
-    """
-    Resolve the user token from (in order):
-      1. First command-line argument
-      2. AUDIT_VAULT_TOKEN environment variable
-      3. /var/auditvault/config.json written by the installer
-
-    Returns the token string, or None if not found.
-    """
     # 1. CLI argument
     if len(sys.argv) > 1:
         return sys.argv[1]
@@ -78,12 +70,11 @@ def load_token():
     if os.getenv("AUDIT_VAULT_TOKEN"):
         return os.getenv("AUDIT_VAULT_TOKEN")
 
-    # 3. Config file written by installer
+    # 3. Plain text file (Simplified)
     try:
         with open(CONFIG_FILE, "r") as f:
-            config = json.load(f)
-            return config.get("token")
-    except (OSError, json.JSONDecodeError):
+            return f.read().strip() # Just read the string and trim whitespace
+    except OSError:
         pass
 
     return None
@@ -346,7 +337,7 @@ def collect_all():
         "users": users,
         "services": services,
         "hostname": hostname,
-        "scan_timestamp": datetime.utcnow().isoformat() + "Z",
+        "scan_timestamp": datetime.now(UTC).isoformat(),
     }
 
 

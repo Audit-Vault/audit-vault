@@ -169,7 +169,7 @@ export const createInstruction = async (req: Request, res: Response) => {
 		};
 
 		if (!server.instructions) {
-			server.instructions = [];
+			server.instructions = [] as any;
 		}
 
 		server.instructions.push(newInstruction as any);
