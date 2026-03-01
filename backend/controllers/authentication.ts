@@ -26,14 +26,16 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 				.verifyIdToken(authHeader.replace("Bearer ", ""));
 
 			// check if a new user exists on MongoDB
-			const user: UserType | null = (await User.findOne({
+			const user = await User.findOne({
 				_id: decodedToken.uid
-			})
-				.select("-__v")
-				.lean()) as UserType | null;
+			});
+
+			console.log("[DEBUG]".yellow.bold, "User:", user);
 
 			if (user) {
-				createCookie(user._id, res);
+				createCookie(user._id as string, res);
+				console.log("[DEBUG]".yellow.bold, "User exists, creating cookie");
+
 				return res.status(200).json({ user });
 			}
 
@@ -45,6 +47,12 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 				picture: decodedToken.picture
 			}) as unknown as UserDoc;
 			await newUser.save();
+
+			console.log(
+				"[DEBUG]".yellow.bold,
+				"User did not NOT exist; created user and saved to MongoDB",
+				user
+			);
 
 			createCookie(newUser._id, res);
 			return res
@@ -59,12 +67,10 @@ const signInWithGoogle = async (req: Request, res: Response) => {
 			(error as Error).toString().red.bold
 		);
 
-		return res
-			.status(500)
-			.json({
-				message: "Internal Server Error",
-				error: (error as Error).message
-			});
+		return res.status(500).json({
+			message: "Internal Server Error",
+			error: (error as Error).message
+		});
 	}
 };
 
