@@ -6,6 +6,7 @@ type User = {
 };
 
 type Instruction = {
+	_id: string;
 	type: string;
 	description: string;
 	data: any;
