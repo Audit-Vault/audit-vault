@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Server } from "../models/server";
 import mongoose from "mongoose";
 import { randomUUID } from "crypto";
+import { analyzeScanWithGemini } from "../services/gemini";
 
 // Temporary storage for partial uploads
 const uploadSessions = new Map<string, {
@@ -216,12 +217,36 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 
 		await server.save();
 
-		// Clean up session
+		// Capture identifiers needed for async update
+		const serverId = server._id.toString();
+		const scanIndex = server.scans.length - 1;
+		const scanData = { ...session.scanData };
+		const vulnerabilities = [...(session.vulnerabilities || [])];
+
+		// Clean up session before async work
 		uploadSessions.delete(sessionId);
+
+		// Kick off Gemini analysis asynchronously so the response isn't blocked
+		analyzeScanWithGemini(scanData, vulnerabilities)
+			.then(async (report) => {
+				await Server.findByIdAndUpdate(serverId, {
+					$set: {
+						[`scans.${scanIndex}.report`]: report,
+						vulnerabilities: report.issues.map(issue => ({
+							name: issue.title,
+							description: issue.description,
+							severity: issue.severity,
+							recommendation: issue.recommendation
+						}))
+					}
+				});
+				console.log(`Gemini analysis complete for server: ${session.serverName}`);
+			})
+			.catch(err => console.error("Gemini analysis failed:", err));
 
 		res.status(200).json({
 			success: true,
-			message: "Upload finalized and data saved successfully",
+			message: "Upload finalized. Analysis in progress.",
 			server: {
 				id: server.uuid,
 				name: server.name,
@@ -234,6 +259,37 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 		res.status(500).json({
 			success: false,
 			message: "Failed to finalize upload",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Poll for scan report readiness by server name
+ */
+export const getScanReport = async (req: Request, res: Response) => {
+	try {
+		const { serverName } = req.params;
+
+		const server = await Server.findOne({ name: serverName });
+		if (!server || server.scans.length === 0) {
+			return res.status(200).json({ ready: false });
+		}
+
+		const latestScan = server.scans[server.scans.length - 1] as any;
+		if (!latestScan.report || !latestScan.report.score) {
+			return res.status(200).json({ ready: false });
+		}
+
+		return res.status(200).json({
+			ready: true,
+			report: latestScan.report
+		});
+	} catch (error) {
+		console.error("Error getting scan report:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to get scan report",
 			error: (error as Error).message
 		});
 	}

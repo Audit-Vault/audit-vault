@@ -5,7 +5,8 @@ import {
 	finalizeUpload,
 	getServer,
 	getAllServers,
-	cancelUpload
+	cancelUpload,
+	getScanReport
 } from "../controllers/dataUpload";
 import { isAuthenticated } from "../middleware/isAuthenticated";
 
@@ -28,5 +29,8 @@ router.get("/server/:serverId", isAuthenticated, getServer);
 
 // Get all servers (protected)
 router.get("/servers", isAuthenticated, getAllServers);
+
+// Poll for scan report readiness by server name
+router.get("/report/by-name/:serverName", getScanReport);
 
 export default router;

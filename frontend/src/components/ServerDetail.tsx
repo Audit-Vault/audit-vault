@@ -71,7 +71,7 @@ export function ServerDetail() {
 
   const handleDownload = () => {
     if (!server) return;
-    
+
     const reportContent = `AuditVault Security Report
 Server: ${server.name}
 Generated: ${new Date().toLocaleString()}
@@ -102,9 +102,9 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric', 
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -146,7 +146,7 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
     );
   }
 
-  const healthScore = server.vulnerabilities.length === 0 ? 100 : 
+  const healthScore = server.vulnerabilities.length === 0 ? 100 :
     Math.max(0, 100 - (server.vulnerabilities.length * 5));
 
   return (
