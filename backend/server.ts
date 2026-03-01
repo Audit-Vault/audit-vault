@@ -22,6 +22,17 @@ const corsOptions = {
 	optionSuccessStatus: 200
 };
 
+// Security headers for OAuth popup authentication
+app.use((req, res, next) => {
+	// Allow popups to communicate back (required for Google OAuth)
+	res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+	// Allow cross-origin resource loading
+	res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+	// Allow embedding from same origin
+	res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+	next();
+});
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

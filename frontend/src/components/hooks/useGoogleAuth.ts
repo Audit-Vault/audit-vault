@@ -12,8 +12,17 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 			const result = await signInWithPopup(auth, googleProvider);
 			const token = await result.user.getIdToken();
 			return token;
-		} catch (error) {
-			console.log(error);
+		} catch (error: any) {
+			console.error("Google Sign-In Error:", error);
+			// Provide more specific error messages
+			if (error.code === 'auth/popup-blocked') {
+				throw new Error('Popup was blocked. Please allow popups for this site.');
+			} else if (error.code === 'auth/popup-closed-by-user') {
+				throw new Error('Sign-in cancelled. Please try again.');
+			} else if (error.code === 'auth/cancelled-popup-request') {
+				throw new Error('Another sign-in popup is already open.');
+			}
+			throw error;
 		}
 	};
 
@@ -36,8 +45,9 @@ export default function useGoogleAuth(): UseGoogleAuthHook {
 					withCredentials: true
 				}
 			);
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Error during Google sign-in mutation:", error);
+			throw error; // Re-throw to allow UI to handle the error
 		}
 	};
 

@@ -1,4 +1,5 @@
 #!/bin/sh
+# To be called like this: curl -sL https://nextcloud.hnasheralneam.dev/index.php/s/install-auditvault/download | sh -s -- unique-server-id
 
 printf "Starting...\n"
 printf "    ___             ___ __ _    __            ____ \n";
@@ -24,6 +25,9 @@ sudo chown $USER /usr/bin/auditvault-agent
 sudo curl https://nextcloud.hnasheralneam.dev/index.php/s/agent-auditvault/download > /usr/bin/auditvault-agent
 
 sudo mkdir /var/auditvault
+sudo touch /var/auditvault/server-id
+sudo chown $USER /var/auditvault/server-id
+sudo echo $1 > /var/auditvault/server-id
 sudo tee /usr/lib/systemd/system/auditvault-agent.service > /dev/null <<EOF
 [Unit]
 Description=Agent for AuditValult Secure

@@ -45,6 +45,23 @@ export function AuthPage({ onAuthComplete }) {
 
 	const { googleSignInMutation } = useGoogleAuth();
 
+	const handleGoogleSignIn = async () => {
+		setLoading(true);
+		setError("");
+		try {
+			await googleSignInMutation();
+			// Authentication successful, call onAuthComplete if provided
+			if (onAuthComplete) {
+				onAuthComplete();
+			}
+		} catch (err: any) {
+			console.error("Authentication error:", err);
+			setError(err.message || "Failed to sign in. Please try again.");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<div
 			style={{
@@ -161,7 +178,7 @@ export function AuthPage({ onAuthComplete }) {
 					{/* Google Button */}
 					<button
 						className="google-btn"
-						onClick={googleSignInMutation}
+						onClick={handleGoogleSignIn}
 						disabled={loading}
 						style={{
 							width: "100%",
