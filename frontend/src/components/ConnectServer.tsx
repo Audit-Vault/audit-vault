@@ -78,7 +78,7 @@ export function ConnectServer({ userToken, onServerConnected, onBack }: ConnectS
               type="text"
               placeholder="e.g., production-web-01"
               value={serverName}
-              onChange={(e) => setServerName(e.target.value)}
+              onChange={(e: { target: { value: any; }; }) => setServerName(e.target.value)}
               className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 text-lg py-6"
             />
           </div>
