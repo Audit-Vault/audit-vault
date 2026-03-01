@@ -1,0 +1,335 @@
+import { Request, Response } from "express";
+import { Server } from "../models/server";
+import mongoose from "mongoose";
+import { randomUUID } from "crypto";
+
+// Temporary storage for partial uploads
+const uploadSessions = new Map<string, {
+	serverId: string;
+	serverName: string;
+	scanData: {
+		filePermissions?: any;
+		logs?: any;
+		users?: any;
+	};
+	vulnerabilities?: any[];
+	lastActivity: Date;
+}>();
+
+// Clean up old sessions (older than 1 hour)
+setInterval(() => {
+	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+	for (const [sessionId, session] of uploadSessions.entries()) {
+		if (session.lastActivity < oneHourAgo) {
+			uploadSessions.delete(sessionId);
+		}
+	}
+}, 5 * 60 * 1000); // Run every 5 minutes
+
+/**
+ * Initialize a new upload session
+ */
+export const initializeUpload = async (req: Request, res: Response) => {
+	try {
+		const { serverName, serverId: providedServerId } = req.body;
+
+		if (!serverName) {
+			return res.status(400).json({
+				success: false,
+				message: "serverName is required"
+			});
+		}
+
+		// Check if server already exists (by name or provided ID)
+		let existingServer;
+		if (providedServerId) {
+			existingServer = await Server.findOne({ id: providedServerId });
+		} else {
+			existingServer = await Server.findOne({ name: serverName });
+		}
+
+		// Use existing server ID or generate a new UUID
+		const serverId = existingServer?.uuid || providedServerId || randomUUID();
+
+		// Generate a unique session ID
+		const sessionId = new mongoose.Types.ObjectId().toString();
+
+		// Initialize upload session
+		uploadSessions.set(sessionId, {
+			serverId,
+			serverName,
+			scanData: {},
+			vulnerabilities: [],
+			lastActivity: new Date()
+		});
+
+		res.status(200).json({
+			success: true,
+			sessionId,
+			serverId,
+			isNewServer: !existingServer,
+			message: "Upload session initialized"
+		});
+	} catch (error) {
+		console.error("Error initializing upload:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to initialize upload session",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Upload scan data in parts
+ */
+export const uploadScanData = async (req: Request, res: Response) => {
+	try {
+		const { sessionId, dataType, data } = req.body;
+
+		if (!sessionId || !dataType || !data) {
+			return res.status(400).json({
+				success: false,
+				message: "sessionId, dataType, and data are required"
+			});
+		}
+
+		// Get the upload session
+		const session = uploadSessions.get(sessionId);
+		if (!session) {
+			return res.status(404).json({
+				success: false,
+				message: "Upload session not found or expired"
+			});
+		}
+
+		// Update session activity
+		session.lastActivity = new Date();
+
+		// Store data based on type
+		switch (dataType) {
+			case "filePermissions":
+				session.scanData.filePermissions = data;
+				break;
+			case "logs":
+				session.scanData.logs = data;
+				break;
+			case "users":
+				session.scanData.users = data;
+				break;
+			case "vulnerabilities":
+				session.vulnerabilities = data;
+				break;
+			default:
+				return res.status(400).json({
+					success: false,
+					message: `Unknown dataType: ${dataType}. Valid types: filePermissions, logs, users, vulnerabilities`
+				});
+		}
+
+		res.status(200).json({
+			success: true,
+			message: `${dataType} data uploaded successfully`,
+			session: {
+				serverId: session.serverId,
+				serverName: session.serverName,
+				uploadedParts: {
+					filePermissions: !!session.scanData.filePermissions,
+					logs: !!session.scanData.logs,
+					users: !!session.scanData.users,
+					vulnerabilities: !!session.vulnerabilities && session.vulnerabilities.length > 0
+				}
+			}
+		});
+	} catch (error) {
+		console.error("Error uploading scan data:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to upload scan data",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Finalize the upload and save to database
+ */
+export const finalizeUpload = async (req: Request, res: Response) => {
+	try {
+		const { sessionId } = req.body;
+
+		if (!sessionId) {
+			return res.status(400).json({
+				success: false,
+				message: "sessionId is required"
+			});
+		}
+
+		// Get the upload session
+		const session = uploadSessions.get(sessionId);
+		if (!session) {
+			return res.status(404).json({
+				success: false,
+				message: "Upload session not found or expired"
+			});
+		}
+
+		// Check if we have any data to save
+		const hasData = session.scanData.filePermissions ||
+			session.scanData.logs ||
+			session.scanData.users ||
+			(session.vulnerabilities && session.vulnerabilities.length > 0);
+
+		if (!hasData) {
+			return res.status(400).json({
+				success: false,
+				message: "No data uploaded in this session"
+			});
+		}
+
+		// Find or create server
+		let server = await Server.findOne({ id: session.serverId });
+
+		if (!server) {
+			server = new Server({
+				name: session.serverName,
+				id: session.serverId,
+				vulnerabilities: session.vulnerabilities || [],
+				scans: []
+			});
+		}
+
+		// Add new scan if we have scan data
+		if (session.scanData.filePermissions || session.scanData.logs || session.scanData.users) {
+			server.scans.push({
+				date: new Date(),
+				filePermissions: session.scanData.filePermissions || {},
+				logs: session.scanData.logs || {},
+				users: session.scanData.users || {}
+			} as any);
+		}
+
+		// Update vulnerabilities if provided
+		if (session.vulnerabilities && session.vulnerabilities.length > 0) {
+			server.vulnerabilities = session.vulnerabilities as any;
+		}
+
+		await server.save();
+
+		// Clean up session
+		uploadSessions.delete(sessionId);
+
+		res.status(200).json({
+			success: true,
+			message: "Upload finalized and data saved successfully",
+			server: {
+				id: server.uuid,
+				name: server.name,
+				totalScans: server.scans.length,
+				totalVulnerabilities: server.vulnerabilities.length
+			}
+		});
+	} catch (error) {
+		console.error("Error finalizing upload:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to finalize upload",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Get server information
+ */
+export const getServer = async (req: Request, res: Response) => {
+	try {
+		const { serverId } = req.params;
+
+		const server = await Server.findOne({ id: serverId });
+
+		if (!server) {
+			return res.status(404).json({
+				success: false,
+				message: "Server not found"
+			});
+		}
+
+		res.status(200).json({
+			success: true,
+			server
+		});
+	} catch (error) {
+		console.error("Error getting server:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to get server information",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Get all servers
+ */
+export const getAllServers = async (req: Request, res: Response) => {
+	try {
+		const servers = await Server.find({}).select('id name vulnerabilities scans');
+
+		res.status(200).json({
+			success: true,
+			count: servers.length,
+			servers: servers.map(server => ({
+				id: server.uuid,
+				name: server.name,
+				totalScans: server.scans.length,
+				totalVulnerabilities: server.vulnerabilities.length,
+				lastScan: server.scans.length > 0 ? server.scans[server.scans.length - 1].date : null
+			}))
+		});
+	} catch (error) {
+		console.error("Error getting servers:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to get servers",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Cancel an upload session
+ */
+export const cancelUpload = async (req: Request, res: Response) => {
+	try {
+		const { sessionId } = req.body;
+
+		if (!sessionId) {
+			return res.status(400).json({
+				success: false,
+				message: "sessionId is required"
+			});
+		}
+
+		const existed = uploadSessions.delete(sessionId);
+
+		if (!existed) {
+			return res.status(404).json({
+				success: false,
+				message: "Upload session not found or already expired"
+			});
+		}
+
+		res.status(200).json({
+			success: true,
+			message: "Upload session cancelled"
+		});
+	} catch (error) {
+		console.error("Error cancelling upload:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to cancel upload session",
+			error: (error as Error).message
+		});
+	}
+};

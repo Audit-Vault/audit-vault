@@ -5,6 +5,7 @@ import colors from "colors";
 import authRoutes from "./routes/authentication";
 import cors from "cors";
 import instructionsRoutes from "./routes/instructions";
+import dataUploadRoutes from "./routes/dataUpload";
 
 dotenv.config();
 colors.enable();
@@ -27,13 +28,15 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/instructions", instructionsRoutes);
+app.use("/api/data", dataUploadRoutes);
 
 app.get("/", (req, res) => {
 	res.json({
 		message: "Welcome to the backend API",
 		endpoints: {
 			"/api/auth": "Authentication routes",
-			"/api/instructions": "Instructions routes"
+			"/api/instructions": "Instructions routes",
+			"/api/data": "Data upload routes"
 		}
 	});
 });
