@@ -15,7 +15,7 @@ export function ConnectServer({ userToken, onServerConnected, onBack }: ConnectS
   const [serverName, setServerName] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const curlCommand = `curl -sL https://install.auditvault.com/agent.sh | bash -s ${userToken}`;
+  const curlCommand = `curl -sL https://install.auditvault.com/agent.sh | bash -s ${userToken} ${serverName}`;
 
   const handleCopy = async () => {
     try {

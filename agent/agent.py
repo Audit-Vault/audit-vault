@@ -481,10 +481,13 @@ def main():
         )
         sys.exit(1)
 
-    # Use the machine hostname as the server name
-    server_name = subprocess.run(
-        ["hostname"], capture_output=True, text=True
-    ).stdout.strip()
+    # Use the server name passed as second argument, falling back to hostname
+    if len(sys.argv) > 2:
+        server_name = sys.argv[2]
+    else:
+        server_name = subprocess.run(
+            ["hostname"], capture_output=True, text=True
+        ).stdout.strip()
 
     print(f"Token:   {SERVER_ID[:12]}...")
     print(f"Server:  {server_name}")
