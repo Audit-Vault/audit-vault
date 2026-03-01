@@ -35,14 +35,14 @@ export async function analyzeScanWithGemini(
 	vulnerabilities: Vulnerability[]
 ): Promise<GeminiReport> {
 	const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-	const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+	const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
 
 	// Extract data from logs object if it exists, otherwise use direct fields
 	const logsData = scanData.logs || {};
 	const sshConfig = scanData.sshConfig || logsData.sshConfig || {};
 	const openPorts = scanData.openPorts || logsData.openPorts || [];
 	const services = scanData.services || logsData.services || [];
-	const hostname = scanData.hostname || logsData.hostname || 'Unknown';
+	const hostname = scanData.hostname || logsData.hostname || "Unknown";
 
 	const prompt = `You are a cybersecurity expert. Analyze this server security scan data and return a JSON security report.
 
@@ -85,7 +85,10 @@ Return ONLY valid JSON (no markdown fences, no explanation) in this exact format
 	const text = result.response.text().trim();
 
 	// Strip markdown code fences if Gemini wraps the response
-	const jsonText = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
+	const jsonText = text
+		.replace(/^```json?\n?/, "")
+		.replace(/\n?```$/, "")
+		.trim();
 
 	return JSON.parse(jsonText) as GeminiReport;
 }
