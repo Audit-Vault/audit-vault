@@ -44,7 +44,7 @@ export const initializeUpload = async (req: Request, res: Response) => {
 		// Check if server already exists (by name or provided ID)
 		let existingServer;
 		if (providedServerId) {
-			existingServer = await Server.findOne({ id: providedServerId });
+			existingServer = await Server.findOne({ uuid: providedServerId });
 		} else {
 			existingServer = await Server.findOne({ name: serverName });
 		}
@@ -189,12 +189,12 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 		}
 
 		// Find or create server
-		let server = await Server.findOne({ id: session.serverId });
+		let server = await Server.findOne({ uuid: session.serverId });
 
 		if (!server) {
 			server = new Server({
 				name: session.serverName,
-				id: session.serverId,
+				uuid: session.serverId,
 				vulnerabilities: session.vulnerabilities || [],
 				scans: []
 			});
@@ -385,6 +385,60 @@ export const cancelUpload = async (req: Request, res: Response) => {
 		res.status(500).json({
 			success: false,
 			message: "Failed to cancel upload session",
+			error: (error as Error).message
+		});
+	}
+};
+
+/**
+ * Register a new server and return its UUID
+ */
+export const registerServer = async (req: Request, res: Response) => {
+	try {
+		const { serverName } = req.body;
+
+		if (!serverName) {
+			return res.status(400).json({
+				success: false,
+				message: "serverName is required"
+			});
+		}
+
+		// Check if server with this name already exists
+		const existingServer = await Server.findOne({ name: serverName });
+
+		if (existingServer) {
+			return res.status(200).json({
+				success: true,
+				serverId: existingServer.uuid,
+				serverName: existingServer.name,
+				message: "Server already exists"
+			});
+		}
+
+		// Create new server with a UUID
+		const serverId = randomUUID();
+		const server = new Server({
+			name: serverName,
+			uuid: serverId,
+			vulnerabilities: [],
+			scans: [],
+			instructions: []
+		});
+
+		await server.save();
+
+		res.status(201).json({
+			success: true,
+			serverId: server.uuid,
+			serverName: server.name,
+			message: "Server registered successfully"
+		});
+	} catch (error) {
+		console.error("Error registering server:", error);
+		res.status(500).json({
+			success: false,
+			message: "Failed to register server",
 			error: (error as Error).message
 		});
 	}

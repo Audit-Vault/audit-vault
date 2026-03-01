@@ -6,11 +6,15 @@ import {
 	getServer,
 	getAllServers,
 	cancelUpload,
-	getScanReport
+	getScanReport,
+	registerServer
 } from "../controllers/dataUpload";
 import { isAuthenticated } from "../middleware/isAuthenticated";
 
 const router = express.Router();
+
+// Register a new server (protected)
+router.post("/register-server", isAuthenticated, registerServer);
 
 // Initialize a new upload session
 router.post("/initialize", initializeUpload);

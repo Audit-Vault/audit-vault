@@ -8,11 +8,13 @@ import { Label } from './ui/label';
 export function AddServer() {
   const navigate = useNavigate();
   const [serverName, setServerName] = useState('');
+  const [serverId, setServerId] = useState('');
   const [copied, setCopied] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const userToken = localStorage.getItem('userToken') || '';
-  const curlCommand = `curl -sL https://install.auditvault.com/agent.sh | bash -s ${userToken}`;
+  const curlCommand = `curl -sL https://nextcloud.hnasheralneam.dev/index.php/s/install-auditvault/download | bash -s -- ${serverId}`;
 
   const handleCopy = async () => {
     try {
@@ -40,9 +42,34 @@ export function AddServer() {
     }
   };
 
-  const handleGenerateCommand = () => {
+  const handleGenerateCommand = async () => {
     if (serverName.trim()) {
-      setShowInstructions(true);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/data/register-server`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ serverName: serverName.trim() }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to register server');
+        }
+
+        const data = await response.json();
+        setServerId(data.serverId);
+        setShowInstructions(true);
+      } catch (err) {
+        console.error('Error registering server:', err);
+        setError('Failed to register server. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -62,7 +89,7 @@ export function AddServer() {
             Add Your Server
           </h2>
           <p className="text-lg text-slate-400 max-w-xl mx-auto">
-            {showInstructions 
+            {showInstructions
               ? 'Install the AuditVault agent on your server'
               : 'Name your server to get started'
             }
@@ -93,13 +120,20 @@ export function AddServer() {
                 />
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
               <Button
                 onClick={handleGenerateCommand}
-                disabled={!serverName.trim()}
+                disabled={!serverName.trim() || loading}
                 className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6 text-lg rounded-xl shadow-lg shadow-blue-500/50 hover:shadow-xl hover:shadow-blue-500/60 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
               >
-                Continue
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {loading ? 'Registering...' : 'Continue'}
+                {!loading && <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />}
               </Button>
             </>
           ) : (
@@ -145,7 +179,7 @@ export function AddServer() {
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 mb-8">
                 <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 bg-blue-500 text-white rounded-full text-sm">1</span>
-                  SSH into your server
+                  Access you server
                 </h3>
                 <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6 bg-blue-500 text-white rounded-full text-sm">2</span>
