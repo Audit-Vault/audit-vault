@@ -5,7 +5,8 @@ import {
 	finalizeUpload,
 	getServer,
 	getAllServers,
-	cancelUpload
+	cancelUpload,
+	getScanReport
 } from "../controllers/dataUpload";
 
 const router = express.Router();
@@ -27,5 +28,8 @@ router.get("/server/:serverId", getServer);
 
 // Get all servers
 router.get("/servers", getAllServers);
+
+// Poll for scan report readiness by server name
+router.get("/report/by-name/:serverName", getScanReport);
 
 export default router;

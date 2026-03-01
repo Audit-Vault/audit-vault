@@ -33,6 +33,12 @@ const serverSchema = new mongoose.Schema({
 			score: Number,
 			riskLevel: String,
 			summary: String,
+			issues: [{
+				title: String,
+				severity: String,
+				description: String,
+				recommendation: String
+			}],
 			actionPlan: [String]
 		}
 	}]

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { AuditReport } from '../App';
 
@@ -16,81 +17,69 @@ const steps = [
   { id: 6, label: 'Compiling report', duration: 1200 },
 ];
 
-// Mock Gemini API response - In production, replace with real API call
-const generateMockReport = (serverName: string): AuditReport => {
-  return {
-    score: 72,
-    riskLevel: 'medium',
-    summary: `Your ${serverName} server has a generally solid security foundation, but several moderate-risk issues require attention. The system is running outdated packages with known CVEs, SSH is configured with password authentication enabled (a common attack vector), and firewall rules could be more restrictive. On the positive side, automatic security updates are enabled, disk encryption is active, and no critical misconfigurations were detected. Overall, this is a manageable risk profile that can be significantly improved with the recommended actions.`,
-    issues: [
-      {
-        title: 'Outdated System Packages',
-        severity: 'high',
-        description: '23 packages have available security updates, including 3 critical kernel patches. Running outdated software exposes your server to known exploits.',
-        recommendation: 'Run `apt update && apt upgrade` immediately, then enable unattended-upgrades for automatic security patches.',
-      },
-      {
-        title: 'SSH Password Authentication Enabled',
-        severity: 'high',
-        description: 'SSH is configured to accept password-based logins, making the server vulnerable to brute-force attacks. Key-based authentication is significantly more secure.',
-        recommendation: 'Disable password authentication in /etc/ssh/sshd_config by setting "PasswordAuthentication no", and ensure you have SSH keys configured before restarting sshd.',
-      },
-      {
-        title: 'Permissive Firewall Rules',
-        severity: 'medium',
-        description: 'UFW firewall is active but allows traffic on more ports than necessary. Ports 8080, 3000, and 9000 are open to the public internet with no apparent service running.',
-        recommendation: 'Review and restrict firewall rules: `ufw status numbered` then `ufw delete [rule-number]` for unused ports. Follow the principle of least privilege.',
-      },
-      {
-        title: 'No Fail2Ban Protection',
-        severity: 'medium',
-        description: 'Fail2Ban is not installed, leaving the server without automated defense against brute-force login attempts.',
-        recommendation: 'Install and configure Fail2Ban: `apt install fail2ban`, then enable the SSH jail in /etc/fail2ban/jail.local.',
-      },
-      {
-        title: 'Root Login Over SSH',
-        severity: 'medium',
-        description: 'SSH is configured to permit root logins directly. This is a security best-practice violation—root access should be obtained via sudo from a normal user account.',
-        recommendation: 'Set "PermitRootLogin no" in /etc/ssh/sshd_config and restart sshd. Ensure you have a non-root user with sudo privileges first.',
-      },
-      {
-        title: 'Missing Log Monitoring',
-        severity: 'low',
-        description: 'No centralized log monitoring solution detected. Without proactive log analysis, security incidents may go unnoticed.',
-        recommendation: 'Consider setting up a log aggregation service like ELK Stack, or at minimum configure logwatch for daily email reports.',
-      },
-    ],
-    actionPlan: [
-      'Update all system packages and enable automatic security updates',
-      'Disable SSH password authentication and enforce key-based access',
-      'Review and tighten firewall rules, closing unnecessary ports',
-      'Install and configure Fail2Ban with SSH jail enabled',
-      'Disable root SSH login and use sudo for privileged operations',
-      'Set up basic log monitoring (logwatch or a centralized solution)',
-      'Schedule a follow-up audit in 30 days to verify improvements',
-    ],
-  };
-};
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLLS = 100; // ~5 minutes
 
 export function ProcessingScreen({ serverName, onComplete }: ProcessingScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const pollCountRef = useRef(0);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
+    // Step animations — purely visual, run regardless of poll state
     let totalDuration = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     steps.forEach((step, index) => {
       totalDuration += step.duration;
-      setTimeout(() => {
-        setCurrentStep(index + 1);
-      }, totalDuration);
+      timers.push(setTimeout(() => setCurrentStep(index + 1), totalDuration));
     });
 
-    // Generate report after all steps complete
-    setTimeout(() => {
-      const report = generateMockReport(serverName);
-      onComplete(report);
-    }, totalDuration + 500);
-  }, [serverName, onComplete]);
+    // Poll the backend for the completed report
+    const poll = async () => {
+      if (pollCountRef.current >= MAX_POLLS) {
+        setError('Analysis is taking longer than expected. Please refresh and try again.');
+        return;
+      }
+      pollCountRef.current += 1;
+
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_BASE_URL}/api/data/report/by-name/${encodeURIComponent(serverName)}`
+        );
+        if (!res.ok) return; // Not ready yet, keep polling
+
+        const data = await res.json();
+        if (data.ready && data.report) {
+          clearInterval(intervalId);
+          onCompleteRef.current(data.report as AuditReport);
+        }
+      } catch {
+        // Network error — keep polling silently
+      }
+    };
+
+    const intervalId = setInterval(poll, POLL_INTERVAL_MS);
+    poll(); // Immediate first check
+
+    return () => {
+      timers.forEach(clearTimeout);
+      clearInterval(intervalId);
+    };
+  }, [serverName]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-2">Analysis Failed</p>
+          <p className="text-slate-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
