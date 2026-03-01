@@ -165,6 +165,7 @@ export const uploadScanData = async (req: Request, res: Response) => {
 export const finalizeUpload = async (req: Request, res: Response) => {
 	try {
 		const { sessionId } = req.body;
+		const uuid = req.cookies.decoded_uid;
 
 		if (!sessionId) {
 			return res.status(400).json({
@@ -201,8 +202,9 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 
 		if (!server) {
 			server = new Server({
+				_id: session.serverId,
 				name: session.serverName,
-				uuid: session.serverId,
+				uuid,
 				vulnerabilities: session.vulnerabilities || [],
 				scans: []
 			});
@@ -230,7 +232,7 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 		await server.save();
 
 		// Capture identifiers needed for async update
-		const serverId = server._id.toString();
+		const serverId = server._id ? server._id.toString() : null;
 		const scanIndex = server.scans.length - 1;
 		const scanData = { ...session.scanData };
 		const vulnerabilities = [...(session.vulnerabilities || [])];
@@ -262,7 +264,7 @@ export const finalizeUpload = async (req: Request, res: Response) => {
 			success: true,
 			message: "Upload finalized. Analysis in progress.",
 			server: {
-				id: server.uuid,
+				_id: server._id,
 				name: server.name,
 				totalScans: server.scans.length,
 				totalVulnerabilities: server.vulnerabilities.length
@@ -314,9 +316,10 @@ export const getScanReport = async (req: Request, res: Response) => {
  */
 export const getServer = async (req: Request, res: Response) => {
 	try {
+		const uuid = req.cookies.decoded_uid;
 		const { serverId } = req.params;
 
-		const server = await Server.findOne({ uuid: serverId });
+		const server = await Server.findOne({ _id: serverId, uuid: uuid });
 
 		if (!server) {
 			return res.status(404).json({
@@ -353,7 +356,8 @@ export const getAllServers = async (req: Request, res: Response) => {
 			success: true,
 			count: servers.length,
 			servers: servers.map(server => ({
-				id: server.uuid,
+				id: server._id,
+				uuid: server.uuid,
 				name: server.name,
 				totalScans: server.scans.length,
 				totalVulnerabilities: server.vulnerabilities.length,
@@ -416,6 +420,7 @@ export const cancelUpload = async (req: Request, res: Response) => {
 export const registerServer = async (req: Request, res: Response) => {
 	try {
 		const { serverName } = req.body;
+		const uuid = req.cookies.decoded_uid;
 
 		if (!serverName) {
 			return res.status(400).json({
@@ -439,8 +444,9 @@ export const registerServer = async (req: Request, res: Response) => {
 		// Create new server with a UUID
 		const serverId = randomUUID();
 		const server = new Server({
+			_id: serverId,
 			name: serverName,
-			uuid: serverId,
+			uuid,
 			vulnerabilities: [],
 			scans: [],
 			instructions: []

@@ -17,19 +17,19 @@ const router = express.Router();
 router.post("/register-server", isAuthenticated, registerServer);
 
 // Initialize a new upload session
-router.post("/initialize", initializeUpload);
+router.post("/initialize", isAuthenticated, initializeUpload);
 
 // Upload scan data in parts
 router.post("/upload", uploadScanData);
 
 // Finalize the upload and save to database
-router.post("/finalize", finalizeUpload);
+router.post("/finalize", isAuthenticated, finalizeUpload);
 
 // Cancel an upload session
 router.post("/cancel", cancelUpload);
 
 // Get server information by ID (protected)
-router.get("/server/:serverId", getServer);
+router.get("/server/:serverId", isAuthenticated, getServer);
 
 // Get all servers (protected)
 router.get("/servers", isAuthenticated, getAllServers);

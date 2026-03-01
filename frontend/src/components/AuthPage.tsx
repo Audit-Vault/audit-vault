@@ -136,7 +136,7 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 							fontWeight: 800,
 							background: "linear-gradient(90deg, #7dd3fc, #38bdf8)",
 							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent"
+							WebkitTextFillColor: "transparent",
 						}}
 					>
 						AuditVault
