@@ -78,6 +78,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) in this exact format
       "recommendation": "<specific actionable fix>"
     }
   ],
+  remediationScript: "<bash script to automatically fix issues>",
   "actionPlan": ["<prioritized step 1>", "<step 2>", ...]
 }`;
 
