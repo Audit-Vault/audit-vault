@@ -57,5 +57,10 @@
     server: {
       port: 3000,
       open: true,
+      headers: {
+        // Allow OAuth popups to communicate back to the parent window
+        'Cross-Origin-Opener-Policy': 'unsafe-none',
+        'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      },
     },
   });

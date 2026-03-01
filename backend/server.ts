@@ -25,7 +25,7 @@ const corsOptions = {
 // Security headers for OAuth popup authentication
 app.use((req, res, next) => {
 	// Allow popups to communicate back (required for Google OAuth)
-	res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+	res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
 	// Allow cross-origin resource loading
 	res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 	// Allow embedding from same origin
