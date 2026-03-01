@@ -4,8 +4,7 @@
       "private": true,
       "scripts": {
             "dev": "vite",
-            "build": "vite install && vite build",
-            "start": "vite preview"
+            "build": "vite build"
       },
       "dependencies": {
             "@jsr/supabase__supabase-js": "^2.49.8",
@@ -62,9 +61,5 @@
             "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.11.0",
             "typescript": "^5.9.3"
-      },
-      "scripts": {
-            "dev": "vite",
-            "build": "vite build"
       }
 }

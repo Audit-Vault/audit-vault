@@ -194,7 +194,8 @@ const Arrow = () => (
             maxWidth: 620, margin: "0 auto 40px",
           }}>
             Deploy a security agent with a single curl command. Get an AI-powered executive report
-            with risk scores, plain-language summaries, and actionable recommendations — all in minutes.
+            with risk scores, plain-language summaries, and actionable recommendations — all in minutes.      
+           
           </p>
   
           <div className="fade4" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }}>
@@ -210,6 +211,7 @@ const Arrow = () => (
               <span className="arrow-icon" style={{ width: 18, height: 18 }}><Arrow /></span>
             </button>
           </div>
+          
   
           {/* Badges */}
           <div className="fade4" style={{
