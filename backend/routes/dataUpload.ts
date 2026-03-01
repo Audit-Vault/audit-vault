@@ -16,14 +16,14 @@ const router = express.Router();
 // Register a new server (protected)
 router.post("/register-server", isAuthenticated, registerServer);
 
-// Initialize a new upload session
-router.post("/initialize", isAuthenticated, initializeUpload);
+// Initialize a new upload session (agent endpoint - no auth required, uses serverId)
+router.post("/initialize", initializeUpload);
 
-// Upload scan data in parts
+// Upload scan data in parts (agent endpoint)
 router.post("/upload", uploadScanData);
 
-// Finalize the upload and save to database
-router.post("/finalize", isAuthenticated, finalizeUpload);
+// Finalize the upload and save to database (agent endpoint)
+router.post("/finalize", finalizeUpload);
 
 // Cancel an upload session
 router.post("/cancel", cancelUpload);

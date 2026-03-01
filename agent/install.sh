@@ -23,7 +23,7 @@ fi
 sudo mkdir -p /var/auditvault
 sudo chmod 755 /var/auditvault
 
-sudo curl -o /usr/bin/auditvault-agent https://nextcloud.hnasheralneam.dev/index.php/s/agent-auditvault/download
+sudo curl -L -o /usr/bin/auditvault-agent "https://nextcloud.hnasheralneam.dev/index.php/s/agent-auditvault/download"
 sudo chmod +x /usr/bin/auditvault-agent
 
 echo "$1" | sudo tee /var/auditvault/server-id > /dev/null
