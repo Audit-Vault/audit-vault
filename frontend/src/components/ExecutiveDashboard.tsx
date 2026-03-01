@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, AlertTriangle, ChevronDown, ChevronUp, Shield, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { AuditReport } from '../App';
-
+//real one 
 interface ExecutiveDashboardProps {
   report: AuditReport;
   serverName: string;
@@ -20,7 +20,7 @@ const severityColors = {
   low: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
   medium: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
   high: 'text-red-400 bg-red-500/10 border-red-500/30',
-  critical: 'text-purple-400 bg-pgiturple-500/10 border-purple-500/30',
+  critical: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
 };
 
 const riskLevelColors = {
