@@ -78,27 +78,8 @@ export function AddServer() {
 		}
 	};
 
-	// 1. Define the mutation at the top level of your component
-	const { mutate } = useMutation({
-		mutationFn: async () => {
-			const res = await axios.post(
-				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/instructions/${serverId}`,
-				{},
-				{ withCredentials: true }
-			);
-			return res.data;
-		},
-		onSuccess: () => {
-			navigate("/dashboard");
-		},
-		onError: error => {
-			console.error("Mutation failed:", error);
-		}
-	});
-
-	// 2. Use the mutate function inside your event handler
 	const handleContinue = () => {
-		mutate();
+		navigate("/dashboard");
 	};
 
   return (
