@@ -246,7 +246,7 @@ export const getServer = async (req: Request, res: Response) => {
 	try {
 		const { serverId } = req.params;
 
-		const server = await Server.findOne({ id: serverId });
+		const server = await Server.findOne({ uuid: serverId });
 
 		if (!server) {
 			return res.status(404).json({
@@ -274,7 +274,7 @@ export const getServer = async (req: Request, res: Response) => {
  */
 export const getAllServers = async (req: Request, res: Response) => {
 	try {
-		const servers = await Server.find({}).select('id name vulnerabilities scans');
+		const servers = await Server.find({}).select('uuid name vulnerabilities scans');
 
 		res.status(200).json({
 			success: true,

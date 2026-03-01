@@ -7,6 +7,7 @@ import {
 	getAllServers,
 	cancelUpload
 } from "../controllers/dataUpload";
+import { isAuthenticated } from "../middleware/isAuthenticated";
 
 const router = express.Router();
 
@@ -22,10 +23,10 @@ router.post("/finalize", finalizeUpload);
 // Cancel an upload session
 router.post("/cancel", cancelUpload);
 
-// Get server information by ID
-router.get("/server/:serverId", getServer);
+// Get server information by ID (protected)
+router.get("/server/:serverId", isAuthenticated, getServer);
 
-// Get all servers
-router.get("/servers", getAllServers);
+// Get all servers (protected)
+router.get("/servers", isAuthenticated, getAllServers);
 
 export default router;
