@@ -101,11 +101,11 @@ export function ProcessingScreen({ serverName, onComplete }: ProcessingScreenPro
             <div className="absolute inset-0 bg-blue-500 rounded-2xl blur-xl opacity-30 animate-pulse"></div>
             <Loader2 className="w-10 h-10 text-blue-400 animate-spin relative z-10" strokeWidth={2} />
           </div>
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold text-Black mb-4">
             Analyzing Your Infrastructure
           </h2>
           <p className="text-lg text-slate-400">
-            Server: <span className="text-white font-medium">{serverName}</span>
+            Server: <span className="text-black font-medium">{serverName}</span>
           </p>
         </div>
 
@@ -177,7 +177,7 @@ export function ProcessingScreen({ serverName, onComplete }: ProcessingScreenPro
         {/* Info Note */}
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-500">
-            This usually takes 1-2 minutes. Please don't close this window.
+            This takes only 90 seconds. Please don't close this window.
           </p>
         </div>
       </div>
