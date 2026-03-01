@@ -1,5 +1,6 @@
 import { useState } from "react";
 import useGoogleAuth from "./hooks/useGoogleAuth";
+import React from "react";
 
 const ShieldIcon = () => (
 	<svg
