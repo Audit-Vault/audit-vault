@@ -79,7 +79,7 @@ export function ServerDetail() {
 		if (server) {
 			fetchInstructions();
 		}
-	}, [server?.uuid]);
+	}, [server?._id]);
 
 	const fetchServerDetails = async () => {
 		try {
@@ -111,7 +111,7 @@ export function ServerDetail() {
 		try {
 			setLoadingInstructions(true);
 			const response = await fetch(
-				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/instructions/history/${server.uuid}`,
+				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/instructions/history/${server._id}`,
 				{
 					credentials: "include"
 				}

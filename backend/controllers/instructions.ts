@@ -3,7 +3,7 @@ import { Server } from "../models/server";
 import { Instruction } from "../types";
 
 /**
- * Get pending instructions for a server
+ * Get pending instructions for a server (agent endpoint)
  */
 export const getPendingInstructions = async (req: Request, res: Response) => {
 	try {
@@ -16,7 +16,7 @@ export const getPendingInstructions = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server
+		// Find the server by UUID (agent uses UUID token)
 		const server = await Server.findOne({ uuid: serverId });
 
 		if (!server) {
@@ -54,7 +54,7 @@ export const getPendingInstructions = async (req: Request, res: Response) => {
 };
 
 /**
- * Mark an instruction as completed
+ * Mark an instruction as completed (agent endpoint)
  */
 export const completeInstruction = async (req: Request, res: Response) => {
 	try {
@@ -68,7 +68,7 @@ export const completeInstruction = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server and update the instruction status
+		// Find the server by UUID (agent uses UUID token)
 		const server = await Server.findOne({ uuid: serverId });
 
 		if (!server) {
@@ -147,7 +147,7 @@ export const createInstruction = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server
+		// Find the server by MongoDB _id (admin endpoint)
 		const server = await Server.findOne({ _id: serverId });
 
 		if (!server) {
@@ -206,7 +206,6 @@ export const createInstruction = async (req: Request, res: Response) => {
 export const getInstructionHistory = async (req: Request, res: Response) => {
 	try {
 		const { serverId } = req.params;
-		const uuid = req.cookies.decoded_uid;
 		const { limit = "50" } = req.query;
 
 		if (!serverId) {
@@ -216,8 +215,8 @@ export const getInstructionHistory = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Find the server
-		const server = await Server.findOne({ uuid: serverId });
+		// Find the server by MongoDB _id (admin endpoint)
+		const server = await Server.findOne({ _id: serverId });
 
 		if (!server) {
 			return res.status(404).json({
@@ -234,7 +233,6 @@ export const getInstructionHistory = async (req: Request, res: Response) => {
 		res.status(200).json({
 			success: true,
 			serverId: server._id,
-			uuid,
 			serverName: server.name,
 			total: allInstructions.length,
 			instructions: allInstructions.map((inst: any) => ({
