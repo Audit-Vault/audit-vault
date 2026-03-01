@@ -126,7 +126,7 @@ export function OrganizationDashboard({ onStartNewAudit }: OrganizationDashboard
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="flex min-h-screen bg-slate-900">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 shadow-sm">
         <div className="p-6">
