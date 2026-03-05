@@ -519,6 +519,39 @@ def execute_instruction(instruction, server_id, server_name):
         except Exception as e:
             result = {"success": False, "message": str(e)}
 
+    elif inst_type == "execute_command":
+        # Execute a shell command
+        try:
+            command = instruction.get("data", {}).get("command", "")
+            if not command:
+                result = {"success": False, "message": "No command provided"}
+            else:
+                print(f"  Running command: {command}")
+                # Execute the command using subprocess
+                proc = subprocess.run(
+                    command,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minute timeout
+                )
+                result = {
+                    "success": proc.returncode == 0,
+                    "returncode": proc.returncode,
+                    "stdout": proc.stdout,
+                    "stderr": proc.stderr,
+                    "message": f"Command {'succeeded' if proc.returncode == 0 else 'failed'} with exit code {proc.returncode}"
+                }
+                print(f"  Exit code: {proc.returncode}")
+                if proc.stdout:
+                    print(f"  Output: {proc.stdout[:200]}")
+                if proc.stderr and proc.returncode != 0:
+                    print(f"  Error: {proc.stderr[:200]}", file=sys.stderr)
+        except subprocess.TimeoutExpired:
+            result = {"success": False, "message": "Command timed out after 5 minutes"}
+        except Exception as e:
+            result = {"success": False, "message": str(e)}
+
     # Report completion
     url = f"{BACKEND_URL}/api/instructions/complete/{server_id}/{inst_id}"
     payload = json.dumps({

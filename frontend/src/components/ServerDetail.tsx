@@ -8,7 +8,8 @@ import {
 	CheckCircle2,
 	Clock,
 	Download,
-	RefreshCw
+	RefreshCw,
+	Terminal
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -25,6 +26,19 @@ interface Scan {
 	filePermissions: any;
 	logs: any;
 	users: any;
+	report?: {
+		score: number;
+		riskLevel: string;
+		summary: string;
+		issues: Array<{
+			title: string;
+			severity: string;
+			description: string;
+			recommendation: string;
+		}>;
+		actionPlan: string[];
+		remediationScript?: string;
+	};
 }
 
 interface Instruction {
@@ -216,6 +230,67 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 		} catch (err) {
 			console.error("Error creating scan instruction:", err);
 			const errorMessage = err instanceof Error ? err.message : "Failed to create scan instruction. Please try again.";
+			setInstructionMessage({
+				type: "error",
+				text: errorMessage
+			});
+
+			// Clear error message after 5 seconds
+			setTimeout(() => {
+				setInstructionMessage(null);
+			}, 5000);
+		} finally {
+			setIsCreatingInstruction(false);
+		}
+	};
+
+	const handleExecuteRemediation = async (command: string) => {
+		if (!server) return;
+
+		try {
+			setIsCreatingInstruction(true);
+			setInstructionMessage(null);
+
+			const response = await fetch(
+				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/instructions/create/${server._id}`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					credentials: "include",
+					body: JSON.stringify({
+						type: "execute_command",
+						description: "Execute remediation script",
+						data: { command }
+					})
+				}
+			);
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => null);
+				console.error("API Error:", response.status, errorData);
+				throw new Error(errorData?.message || `Server returned ${response.status}`);
+			}
+
+			const data = await response.json();
+			console.log("Execute command instruction created:", data);
+
+			setInstructionMessage({
+				type: "success",
+				text: "Remediation script queued for execution! The agent will execute it shortly."
+			});
+
+			// Refresh instructions list
+			fetchInstructions();
+
+			// Clear success message after 5 seconds
+			setTimeout(() => {
+				setInstructionMessage(null);
+			}, 5000);
+		} catch (err) {
+			console.error("Error creating execute instruction:", err);
+			const errorMessage = err instanceof Error ? err.message : "Failed to queue remediation script. Please try again.";
 			setInstructionMessage({
 				type: "error",
 				text: errorMessage
@@ -428,6 +503,50 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 						</div>
 					)}
 				</div>
+
+				{/* Remediation Script Section */}
+				{server.scans.length > 0 && server.scans[server.scans.length - 1].report?.remediationScript && (
+					<div className="mb-8">
+						<h2 className="text-2xl font-bold text-white mb-4">
+							Automated Remediation
+						</h2>
+						<Card className="bg-slate-900/50 border-slate-700/50 p-6">
+							<div className="flex items-start justify-between mb-4">
+								<div className="flex items-center gap-2">
+									<Terminal className="w-5 h-5 text-green-400" />
+									<h3 className="text-lg font-semibold text-white">
+										Remediation Script
+									</h3>
+								</div>
+								<Button
+									onClick={() => handleExecuteRemediation(server.scans[server.scans.length - 1].report!.remediationScript!)}
+									disabled={isCreatingInstruction}
+									className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/30"
+								>
+									{isCreatingInstruction ? (
+										<>
+											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+											Queueing...
+										</>
+									) : (
+										<>
+											<Terminal className="w-4 h-4 mr-2" />
+											Execute Script
+										</>
+									)}
+								</Button>
+							</div>
+							<div className="bg-slate-950 rounded-lg p-4 overflow-x-auto">
+								<pre className="text-sm text-green-400 font-mono">
+									{server.scans[server.scans.length - 1].report!.remediationScript}
+								</pre>
+							</div>
+							<p className="text-slate-400 text-sm mt-4">
+								⚠️ Review the script carefully before executing. This will create an instruction for the agent to run these commands on your server.
+							</p>
+						</Card>
+					</div>
+				)}
 
 				{/* Pending Instructions Section */}
 				<div className="mb-8">

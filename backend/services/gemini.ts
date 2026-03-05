@@ -28,6 +28,7 @@ export interface GeminiReport {
 		recommendation: string;
 	}>;
 	actionPlan: string[];
+	remediationScript?: string;
 }
 
 export async function analyzeScanWithGemini(

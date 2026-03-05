@@ -138,7 +138,8 @@ export const createInstruction = async (req: Request, res: Response) => {
 			"trigger_scan",
 			"update_config",
 			"restart_agent",
-			"collect_logs"
+			"collect_logs",
+			"execute_command"
 		];
 		if (!validTypes.includes(type)) {
 			return res.status(400).json({

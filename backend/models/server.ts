@@ -57,7 +57,8 @@ const serverSchema = new mongoose.Schema(
 							recommendation: String
 						}
 					],
-					actionPlan: [String]
+					actionPlan: [String],
+					remediationScript: String
 				}
 			}
 		]
