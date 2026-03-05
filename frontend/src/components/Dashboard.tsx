@@ -16,7 +16,6 @@ interface ServerItem {
 export function Dashboard() {
 	const navigate = useNavigate();
 	const [servers, setServers] = useState<ServerItem[]>([]);
-	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -25,7 +24,6 @@ export function Dashboard() {
 
 	const fetchServers = async () => {
 		try {
-			setLoading(true);
 			const response = await fetch(
 				`${import.meta.env.VITE_BACKEND_BASE_URL}/api/data/servers`,
 				{
@@ -42,8 +40,6 @@ export function Dashboard() {
 		} catch (err) {
 			console.error("Error fetching servers:", err);
 			setError("Failed to load servers");
-		} finally {
-			setLoading(false);
 		}
 	};
 
@@ -65,108 +61,274 @@ export function Dashboard() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
+		<div style={{
+			minHeight: "100vh",
+			background: "#f5ebe0",
+			color: "#444",
+			fontFamily: "'DM Sans', system-ui, sans-serif"
+		}}>
+			<style>{`
+				@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+				@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+				.dashboard-card { animation: fadeUp 0.5s ease both; }
+				.server-card { 
+					transition: all 0.2s; 
+					cursor: pointer;
+				}
+				.server-card:hover { 
+					transform: scale(1.02);
+					box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+				}
+				.add-server-btn:hover { 
+					transform: scale(1.05); 
+				}
+			`}</style>
+
 			<MainHeader />
 
 			{/* Main Content */}
-			<div className="container mx-auto px-6 py-20">
-				<div className="mb-8">
-					<h2 className="text-3xl font-bold text-white mb-2">Your Servers</h2>
-					<p className="text-slate-400">
-						Manage and monitor your server security
-					</p>
+			<div style={{
+				maxWidth: 1200,
+				margin: "0 auto",
+				padding: "80px 24px"
+			}}>
+				<div style={{ marginBottom: 32 }}>
+					<h2 style={{
+						fontFamily: "monospace",
+						fontSize: 32,
+						fontWeight: 700,
+						color: "#444",
+						marginBottom: 8
+					}}>
+						Your Servers
+					</h2>
 				</div>
 
-				{loading ? (
-					<div className="flex items-center justify-center py-20">
-						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-					</div>
-				) : error ? (
-					<div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
-						<AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-						<p className="text-red-400">{error}</p>
+				{error ? (
+					<div style={{
+						background: "rgba(240, 92, 110, 0.1)",
+						border: "2px solid rgba(240, 92, 110, 0.3)",
+						borderRadius: 16,
+						padding: 24,
+						textAlign: "center"
+					}}>
+						<AlertTriangle style={{
+							width: 48,
+							height: 48,
+							color: "#dc2626",
+							margin: "0 auto 12px"
+						}} />
+						<p style={{ color: "#dc2626", fontSize: 15 }}>{error}</p>
 					</div>
 				) : servers.length === 0 ? (
-					<Card className="bg-slate-900/50 border-slate-700/50 p-12 text-center">
-						<Server className="w-16 h-16 text-slate-600 mx-auto" />
-						<h3 className="text-xl font-semibold text-white mb-2">
+					<div className="dashboard-card" style={{
+						border: "2px solid #d6ccc2",
+						borderRadius: 20,
+						padding: 48,
+						textAlign: "center"
+					}}>
+						<Server style={{
+							width: 64,
+							height: 64,
+							color: "#d5bdaf",
+							margin: "0 auto 16px"
+						}} />
+						<h3 style={{
+							fontSize: 22,
+							fontWeight: 600,
+							color: "#444",
+							marginBottom: 8
+						}}>
 							No servers yet
 						</h3>
-						<p className="text-slate-400 mb-6">
+						<p style={{
+							fontSize: 15,
+							color: "#888",
+							marginBottom: 24
+						}}>
 							Get started by adding your first server to monitor
 						</p>
-						<Button
+						<button
+							className="add-server-btn"
 							onClick={() => navigate("/add-server")}
-							className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/30"
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								gap: 8,
+								padding: "12px 24px",
+								borderRadius: 12,
+								background: "#d5bdaf",
+								border: "none",
+								color: "#fff",
+								fontSize: 15,
+								fontWeight: 600,
+								cursor: "pointer",
+								transition: "all 0.2s",
+								fontFamily: "inherit"
+							}}
 						>
-							<Plus className="w-4 h-4 mr-2" />
+							<Plus style={{ width: 18, height: 18 }} />
 							Add Server
-						</Button>
-					</Card>
+						</button>
+					</div>
 				) : (
 					<>
-						<div className="flex justify-end mb-6">
-							<Button
+						<div style={{
+							display: "flex",
+							justifyContent: "flex-end",
+							marginBottom: 24
+						}}>
+							<button
+								className="add-server-btn"
 								onClick={() => navigate("/add-server")}
-								className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/30"
+								style={{
+									display: "inline-flex",
+									alignItems: "center",
+									gap: 8,
+									padding: "12px 24px",
+									borderRadius: 12,
+									background: "#d5bdaf",
+									border: "none",
+									color: "#fff",
+									fontSize: 15,
+									fontWeight: 600,
+									cursor: "pointer",
+									transition: "all 0.2s",
+									fontFamily: "inherit"
+								}}
 							>
-								<Plus className="w-4 h-4 mr-2" />
+								<Plus style={{ width: 18, height: 18 }} />
 								Add Server
-							</Button>
+							</button>
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						<div style={{
+							display: "grid",
+							gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+							gap: 24
+						}}>
 							{servers.map(server => (
-								<Card
+								<div
 									key={server.id}
-									className="bg-slate-900/50 border-slate-700/50 p-6 hover:border-blue-500/50 transition-all cursor-pointer group"
+									className="server-card"
 									onClick={() => navigate(`/server/${server.id}`)}
+									style={{
+										background: "#ffffffaa",
+										border: "2px solid #d6ccc2",
+										borderRadius: 16,
+										padding: 24
+									}}
 								>
-									<div className="flex items-start justify-between mb-4">
-										<div className="flex items-center gap-3">
-											<div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-												<Server className="w-6 h-6 text-blue-400" />
+									<div style={{
+										display: "flex",
+										alignItems: "flex-start",
+										justifyContent: "space-between",
+										marginBottom: 20
+									}}>
+										<div style={{
+											display: "flex",
+											alignItems: "center",
+											gap: 12
+										}}>
+											<div style={{
+												padding: 10,
+												background: "#f5ebe0",
+												borderRadius: 10
+											}}>
+												<Server style={{
+													width: 24,
+													height: 24,
+													color: "#6B625E"
+												}} />
 											</div>
 											<div>
-												<h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
+												<h3 style={{
+													fontSize: 17,
+													fontWeight: 600,
+													color: "#444"
+												}}>
 													{server.name}
 												</h3>
 											</div>
 										</div>
 									</div>
 
-									<div className="space-y-3">
-										<div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-											<span className="text-slate-400 text-sm">
+									<div>
+										<div style={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "space-between",
+											paddingTop: 12,
+											paddingBottom: 12,
+											borderTop: "1px solid #e8e3dd"
+										}}>
+											<span style={{
+												color: "#888",
+												fontSize: 14
+											}}>
 												Vulnerabilities
 											</span>
-											<span
-												className={`font-semibold ${getSeverityColor(server.totalVulnerabilities)}`}
-											>
+											<span style={{
+												fontWeight: 600,
+												fontSize: 15,
+												color: server.totalVulnerabilities === 0 ? "#10b981" :
+													server.totalVulnerabilities < 5 ? "#f59e0b" :
+													server.totalVulnerabilities < 10 ? "#f97316" : "#dc2626"
+											}}>
 												{server.totalVulnerabilities}
 											</span>
 										</div>
 
-										<div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-											<span className="text-slate-400 text-sm">
+										<div style={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "space-between",
+											paddingTop: 12,
+											paddingBottom: 12,
+											borderTop: "1px solid #e8e3dd"
+										}}>
+											<span style={{
+												color: "#888",
+												fontSize: 14
+											}}>
 												Total Scans
 											</span>
-											<span className="text-white font-semibold">
+											<span style={{
+												color: "#444",
+												fontWeight: 600,
+												fontSize: 15
+											}}>
 												{server.totalScans}
 											</span>
 										</div>
 
-										<div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-											<span className="text-slate-400 text-sm flex items-center gap-2">
-												<Clock className="w-4 h-4" />
+										<div style={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "space-between",
+											paddingTop: 12,
+											paddingBottom: 12,
+											borderTop: "1px solid #e8e3dd"
+										}}>
+											<span style={{
+												color: "#888",
+												fontSize: 14,
+												display: "flex",
+												alignItems: "center",
+												gap: 8
+											}}>
+												<Clock style={{ width: 16, height: 16 }} />
 												Last Scan
 											</span>
-											<span className="text-slate-300 text-sm">
+											<span style={{
+												color: "#666",
+												fontSize: 14
+											}}>
 												{formatDate(server.lastScan)}
 											</span>
 										</div>
 									</div>
-								</Card>
+								</div>
 							))}
 						</div>
 					</>

@@ -63,10 +63,10 @@ interface ServerData {
 }
 
 const severityColors = {
-	low: "bg-yellow-500/10 border-yellow-500/30 text-yellow-400",
-	medium: "bg-orange-500/10 border-orange-500/30 text-orange-400",
-	high: "bg-red-500/10 border-red-500/30 text-red-400",
-	critical: "bg-purple-500/10 border-purple-500/30 text-purple-400"
+	low: { bg: "rgba(251, 191, 36, 0.1)", border: "rgba(251, 191, 36, 0.3)", text: "#f59e0b" },
+	medium: { bg: "rgba(249, 115, 22, 0.1)", border: "rgba(249, 115, 22, 0.3)", text: "#f97316" },
+	high: { bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.3)", text: "#dc2626" },
+	critical: { bg: "rgba(168, 85, 247, 0.1)", border: "rgba(168, 85, 247, 0.3)", text: "#a855f7" }
 };
 
 export function ServerDetail() {
@@ -121,7 +121,7 @@ export function ServerDetail() {
 
 	const fetchInstructions = async () => {
 		if (!server) return;
-		
+
 		try {
 			setLoadingInstructions(true);
 			const response = await fetch(
@@ -316,7 +316,7 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 		});
 	};
 
-	const getSeverityClass = (severity: string) => {
+	const getSeverityStyle = (severity: string) => {
 		const normalized = severity.toLowerCase();
 		return (
 			severityColors[normalized as keyof typeof severityColors] ||
@@ -326,29 +326,80 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 
 	if (loading) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+			<div style={{
+				minHeight: "100vh",
+				background: "#f5ebe0",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center"
+			}}>
+				<div style={{
+					width: 48,
+					height: 48,
+					border: "3px solid #e8e3dd",
+					borderTop: "3px solid #6B625E",
+					borderRadius: "50%",
+					animation: "spin 0.8s linear infinite"
+				}}></div>
+				<style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 			</div>
 		);
 	}
 
 	if (error || !server) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-6">
-				<div className="container mx-auto max-w-6xl">
-					<Button
+			<div style={{
+				minHeight: "100vh",
+				background: "#f5ebe0",
+				padding: 24,
+				fontFamily: "'DM Sans', system-ui, sans-serif"
+			}}>
+				<div style={{
+					maxWidth: 1200,
+					margin: "0 auto"
+				}}>
+					<button
 						onClick={() => navigate("/dashboard")}
-						variant="ghost"
-						className="mb-6 text-slate-300 hover:text-white hover:bg-slate-800/50"
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 8,
+							padding: "8px 16px",
+							borderRadius: 8,
+							background: "transparent",
+							border: "none",
+							color: "#666",
+							fontSize: 14,
+							fontWeight: 600,
+							cursor: "pointer",
+							marginBottom: 24,
+							fontFamily: "inherit"
+						}}
 					>
-						<ArrowLeft className="w-4 h-4 mr-2" />
+						<ArrowLeft style={{ width: 16, height: 16 }} />
 						Back to Dashboard
-					</Button>
-					<Card className="bg-red-500/10 border-red-500/30 p-12 text-center">
-						<AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-2">Error</h3>
-						<p className="text-red-400">{error || "Server not found"}</p>
-					</Card>
+					</button>
+					<div style={{
+						background: "rgba(240, 92, 110, 0.1)",
+						border: "2px solid rgba(240, 92, 110, 0.3)",
+						borderRadius: 16,
+						padding: 48,
+						textAlign: "center"
+					}}>
+						<AlertTriangle style={{
+							width: 64,
+							height: 64,
+							color: "#dc2626",
+							margin: "0 auto 16px"
+						}} />
+						<h3 style={{
+							fontSize: 20,
+							fontWeight: 600,
+							color: "#444",
+							marginBottom: 8
+						}}>Error</h3>
+						<p style={{ color: "#dc2626" }}>{error || "Server not found"}</p>
+					</div>
 				</div>
 			</div>
 		);
@@ -360,237 +411,566 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 			: Math.max(0, 100 - server.vulnerabilities.length * 5);
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-6">
-			<div className="container mx-auto max-w-6xl">
+		<div style={{
+			minHeight: "100vh",
+			background: "#f5ebe0",
+			padding: 24,
+			fontFamily: "'DM Sans', system-ui, sans-serif"
+		}}>
+			<style>{`
+				@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+				@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+				@keyframes spin { to { transform: rotate(360deg); } }
+				.action-btn { transition: all 0.2s; }
+				.action-btn:hover { transform: scale(1.05); }
+				.action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+			`}</style>
+
+			<div style={{
+				maxWidth: 1200,
+				margin: "0 auto"
+			}}>
 				{/* Header */}
-				<div className="flex items-center justify-between mb-8">
-					<Button
+				<div style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					marginBottom: 32,
+					flexWrap: "wrap",
+					gap: 16
+				}}>
+					<button
 						onClick={() => navigate("/dashboard")}
-						variant="ghost"
-						className="text-slate-300 hover:text-white hover:bg-slate-800/50"
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 8,
+							padding: "8px 16px",
+							borderRadius: 8,
+							background: "transparent",
+							border: "none",
+							color: "#666",
+							fontSize: 14,
+							fontWeight: 600,
+							cursor: "pointer",
+							fontFamily: "inherit"
+						}}
 					>
-						<ArrowLeft className="w-4 h-4 mr-2" />
+						<ArrowLeft style={{ width: 16, height: 16 }} />
 						Back to Dashboard
-					</Button>
-					<div className="flex gap-3">
-						<Button
+					</button>
+					<div style={{
+						display: "flex",
+						gap: 12
+					}}>
+						<button
+							className="action-btn"
 							onClick={handleTriggerScan}
 							disabled={isCreatingInstruction}
-							className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/30"
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								gap: 8,
+								padding: "10px 20px",
+								borderRadius: 12,
+								background: "#10b981",
+								border: "none",
+								color: "#fff",
+								fontSize: 14,
+								fontWeight: 600,
+								cursor: "pointer",
+								fontFamily: "inherit"
+							}}
 						>
 							{isCreatingInstruction ? (
 								<>
-									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+									<div style={{
+										width: 16,
+										height: 16,
+										border: "2px solid rgba(255,255,255,0.3)",
+										borderTop: "2px solid #fff",
+										borderRadius: "50%",
+										animation: "spin 0.8s linear infinite"
+									}}></div>
 									Creating...
 								</>
 							) : (
 								<>
-									<RefreshCw className="w-4 h-4 mr-2" />
+									<RefreshCw style={{ width: 16, height: 16 }} />
 									New Scan
 								</>
 							)}
-						</Button>
-						<Button
+						</button>
+						<button
+							className="action-btn"
 							onClick={handleDownload}
-							className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/30"
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								gap: 8,
+								padding: "10px 20px",
+								borderRadius: 12,
+								background: "#d5bdaf",
+								border: "none",
+								color: "#fff",
+								fontSize: 14,
+								fontWeight: 600,
+								cursor: "pointer",
+								fontFamily: "inherit"
+							}}
 						>
-							<Download className="w-4 h-4 mr-2" />
+							<Download style={{ width: 16, height: 16 }} />
 							Download Report
-						</Button>
+						</button>
 					</div>
 				</div>
 
 				{/* Instruction Message */}
 				{instructionMessage && (
-					<Card
-						className={`mb-6 p-4 ${instructionMessage.type === "success" ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}
-					>
-						<p
-							className={`text-center ${instructionMessage.type === "success" ? "text-green-400" : "text-red-400"}`}
-						>
+					<div style={{
+						marginBottom: 24,
+						padding: 16,
+						borderRadius: 12,
+						background: instructionMessage.type === "success"
+							? "rgba(16, 185, 129, 0.1)"
+							: "rgba(240, 92, 110, 0.1)",
+						border: instructionMessage.type === "success"
+							? "2px solid rgba(16, 185, 129, 0.3)"
+							: "2px solid rgba(240, 92, 110, 0.3)"
+					}}>
+						<p style={{
+							textAlign: "center",
+							color: instructionMessage.type === "success" ? "#10b981" : "#dc2626"
+						}}>
 							{instructionMessage.text}
 						</p>
-					</Card>
+					</div>
 				)}
 
 				{/* Server Header */}
-				<div className="mb-8">
-					<div className="flex items-center gap-3 mb-2">
-						<Shield className="w-8 h-8 text-blue-400" />
-						<h1 className="text-3xl font-bold text-white">{server.name}</h1>
+				<div style={{ marginBottom: 32 }}>
+					<div style={{
+						display: "flex",
+						alignItems: "center",
+						gap: 12,
+						marginBottom: 8
+					}}>
+						<Shield style={{ width: 32, height: 32, color: "#6B625E" }} />
+						<h1 style={{
+							fontSize: 30,
+							fontWeight: 700,
+							color: "#444",
+							fontFamily: "monospace"
+						}}>{server.name}</h1>
 					</div>
-					<p className="text-slate-400">
+					<p style={{
+						fontSize: 14,
+						color: "#888"
+					}}>
 						Server ID: {server._id} • Last updated:{" "}
 						{formatDate(server.updatedAt)}
 					</p>
 				</div>
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-					<Card className="bg-slate-900/50 border-slate-700/50 p-6">
-						<div className="flex items-center justify-between">
+				<div style={{
+					display: "grid",
+					gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+					gap: 24,
+					marginBottom: 32
+				}}>
+					<div style={{
+						background: "#ffffffaa",
+						border: "2px solid #d6ccc2",
+						borderRadius: 16,
+						padding: 24
+					}}>
+						<div style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between"
+						}}>
 							<div>
-								<p className="text-slate-400 text-sm mb-1">Health Score</p>
-								<p
-									className={`text-3xl font-bold ${healthScore >= 80 ? "text-green-400" : healthScore >= 60 ? "text-yellow-400" : "text-red-400"}`}
-								>
+								<p style={{
+									fontSize: 13,
+									color: "#888",
+									marginBottom: 8
+								}}>Health Score</p>
+								<p style={{
+									fontSize: 32,
+									fontWeight: 700,
+									color: healthScore >= 80 ? "#10b981" : healthScore >= 60 ? "#f59e0b" : "#dc2626"
+								}}>
 									{healthScore}
 								</p>
 							</div>
-							<CheckCircle2
-								className={`w-12 h-12 ${healthScore >= 80 ? "text-green-400" : healthScore >= 60 ? "text-yellow-400" : "text-red-400"}`}
-							/>
+							<CheckCircle2 style={{
+								width: 48,
+								height: 48,
+								color: healthScore >= 80 ? "#10b981" : healthScore >= 60 ? "#f59e0b" : "#dc2626"
+							}} />
 						</div>
-					</Card>
+					</div>
 
-					<Card className="bg-slate-900/50 border-slate-700/50 p-6">
-						<div className="flex items-center justify-between">
+					<div style={{
+						background: "#ffffffaa",
+						border: "2px solid #d6ccc2",
+						borderRadius: 16,
+						padding: 24
+					}}>
+						<div style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between"
+						}}>
 							<div>
-								<p className="text-slate-400 text-sm mb-1">Vulnerabilities</p>
-								<p
-									className={`text-3xl font-bold ${server.vulnerabilities.length === 0 ? "text-green-400" : "text-red-400"}`}
-								>
+								<p style={{
+									fontSize: 13,
+									color: "#888",
+									marginBottom: 8
+								}}>Vulnerabilities</p>
+								<p style={{
+									fontSize: 32,
+									fontWeight: 700,
+									color: server.vulnerabilities.length === 0 ? "#10b981" : "#dc2626"
+								}}>
 									{server.vulnerabilities.length}
 								</p>
 							</div>
-							<AlertTriangle
-								className={`w-12 h-12 ${server.vulnerabilities.length === 0 ? "text-green-400" : "text-red-400"}`}
-							/>
+							<AlertTriangle style={{
+								width: 48,
+								height: 48,
+								color: server.vulnerabilities.length === 0 ? "#10b981" : "#dc2626"
+							}} />
 						</div>
-					</Card>
+					</div>
 
-					<Card className="bg-slate-900/50 border-slate-700/50 p-6">
-						<div className="flex items-center justify-between">
+					<div style={{
+						background: "#ffffffaa",
+						border: "2px solid #d6ccc2",
+						borderRadius: 16,
+						padding: 24
+					}}>
+						<div style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between"
+						}}>
 							<div>
-								<p className="text-slate-400 text-sm mb-1">Total Scans</p>
-								<p className="text-3xl font-bold text-blue-400">
+								<p style={{
+									fontSize: 13,
+									color: "#888",
+									marginBottom: 8
+								}}>Total Scans</p>
+								<p style={{
+									fontSize: 32,
+									fontWeight: 700,
+									color: "#6B625E"
+								}}>
 									{server.scans.length}
 								</p>
 							</div>
-							<Server className="w-12 h-12 text-blue-400" />
+							<Server style={{
+								width: 48,
+								height: 48,
+								color: "#6B625E"
+							}} />
 						</div>
-					</Card>
+					</div>
 				</div>
 
 				{/* Vulnerabilities Section */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-white mb-4">
+				<div style={{ marginBottom: 32 }}>
+					<h2 style={{
+						fontSize: 24,
+						fontWeight: 700,
+						color: "#444",
+						marginBottom: 16,
+						fontFamily: "monospace"
+					}}>
 						Vulnerabilities
 					</h2>
 					{server.vulnerabilities.length === 0 ? (
-						<Card className="bg-green-500/10 border-green-500/30 p-8 text-center">
-							<CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-3" />
-							<p className="text-green-400 text-lg">
+						<div style={{
+							background: "rgba(16, 185, 129, 0.1)",
+							border: "2px solid rgba(16, 185, 129, 0.3)",
+							borderRadius: 16,
+							padding: 32,
+							textAlign: "center"
+						}}>
+							<CheckCircle2 style={{
+								width: 48,
+								height: 48,
+								color: "#10b981",
+								margin: "0 auto 12px"
+							}} />
+							<p style={{
+								color: "#10b981",
+								fontSize: 17
+							}}>
 								No vulnerabilities detected!
 							</p>
-						</Card>
+						</div>
 					) : (
-						<div className="space-y-4">
-							{server.vulnerabilities.map((vuln, index) => (
-								<Card
-									key={index}
-									className={`border p-6 ${getSeverityClass(vuln.severity)}`}
-								>
-									<div className="flex items-start justify-between mb-2">
-										<h3 className="text-xl font-semibold">{vuln.name}</h3>
-										<span className="px-3 py-1 rounded-full text-xs font-semibold uppercase border">
-											{vuln.severity}
-										</span>
+						<div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+							{server.vulnerabilities.map((vuln, index) => {
+								const severityStyle = getSeverityStyle(vuln.severity);
+								return (
+									<div
+										key={index}
+										style={{
+											background: severityStyle.bg,
+											border: `2px solid ${severityStyle.border}`,
+											borderRadius: 16,
+											padding: 24
+										}}
+									>
+										<div style={{
+											display: "flex",
+											alignItems: "flex-start",
+											justifyContent: "space-between",
+											marginBottom: 8
+										}}>
+											<h3 style={{
+												fontSize: 18,
+												fontWeight: 600,
+												color: "#444"
+											}}>{vuln.name}</h3>
+											<span style={{
+												padding: "4px 12px",
+												borderRadius: 999,
+												fontSize: 11,
+												fontWeight: 600,
+												textTransform: "uppercase",
+												border: `2px solid ${severityStyle.border}`,
+												color: severityStyle.text
+											}}>
+												{vuln.severity}
+											</span>
+										</div>
+										<p style={{ color: "#666", fontSize: 14 }}>{vuln.description}</p>
 									</div>
-									<p className="text-slate-300">{vuln.description}</p>
-								</Card>
-							))}
+								);
+							})}
 						</div>
 					)}
 				</div>
 
 				{/* Remediation Script Section */}
 				{server.scans.length > 0 && server.scans[server.scans.length - 1].report?.remediationScript && (
-					<div className="mb-8">
-						<h2 className="text-2xl font-bold text-white mb-4">
+					<div style={{ marginBottom: 32 }}>
+						<h2 style={{
+							fontSize: 24,
+							fontWeight: 700,
+							color: "#444",
+							marginBottom: 16,
+							fontFamily: "monospace"
+						}}>
 							Automated Remediation
 						</h2>
-						<Card className="bg-slate-900/50 border-slate-700/50 p-6">
-							<div className="flex items-start justify-between mb-4">
-								<div className="flex items-center gap-2">
-									<Terminal className="w-5 h-5 text-green-400" />
-									<h3 className="text-lg font-semibold text-white">
+						<div style={{
+							background: "#ffffffaa",
+							border: "2px solid #d6ccc2",
+							borderRadius: 16,
+							padding: 24
+						}}>
+							<div style={{
+								display: "flex",
+								alignItems: "flex-start",
+								justifyContent: "space-between",
+								marginBottom: 16,
+								flexWrap: "wrap",
+								gap: 16
+							}}>
+								<div style={{
+									display: "flex",
+									alignItems: "center",
+									gap: 8
+								}}>
+									<Terminal style={{ width: 20, height: 20, color: "#10b981" }} />
+									<h3 style={{
+										fontSize: 17,
+										fontWeight: 600,
+										color: "#444"
+									}}>
 										Remediation Script
 									</h3>
 								</div>
-								<Button
+								<button
+									className="action-btn"
 									onClick={() => handleExecuteRemediation(server.scans[server.scans.length - 1].report!.remediationScript!)}
 									disabled={isCreatingInstruction}
-									className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/30"
+									style={{
+										display: "inline-flex",
+										alignItems: "center",
+										gap: 8,
+										padding: "8px 16px",
+										borderRadius: 10,
+										background: "#10b981",
+										border: "none",
+										color: "#fff",
+										fontSize: 14,
+										fontWeight: 600,
+										cursor: "pointer",
+										fontFamily: "inherit"
+									}}
 								>
 									{isCreatingInstruction ? (
 										<>
-											<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+											<div style={{
+												width: 16,
+												height: 16,
+												border: "2px solid rgba(255,255,255,0.3)",
+												borderTop: "2px solid #fff",
+												borderRadius: "50%",
+												animation: "spin 0.8s linear infinite"
+											}}></div>
 											Queueing...
 										</>
 									) : (
 										<>
-											<Terminal className="w-4 h-4 mr-2" />
+											<Terminal style={{ width: 16, height: 16 }} />
 											Execute Script
 										</>
 									)}
-								</Button>
+								</button>
 							</div>
-							<div className="bg-slate-950 rounded-lg p-4 overflow-x-auto">
-								<pre className="text-sm text-green-400 font-mono">
+							<div style={{
+								background: "#2d3748",
+								borderRadius: 12,
+								padding: 16,
+								overflowX: "auto"
+							}}>
+								<pre style={{
+									fontSize: 13,
+									color: "#68d391",
+									fontFamily: "monospace",
+									margin: 0
+								}}>
 									{server.scans[server.scans.length - 1].report!.remediationScript}
 								</pre>
 							</div>
-							<p className="text-slate-400 text-sm mt-4">
+							<p style={{
+								fontSize: 13,
+								color: "#888",
+								marginTop: 16
+							}}>
 								⚠️ Review the script carefully before executing. This will create an instruction for the agent to run these commands on your server.
 							</p>
-						</Card>
+						</div>
 					</div>
 				)}
 
 				{/* Pending Instructions Section */}
-				<div className="mb-8">
-					<h2 className="text-2xl font-bold text-white mb-4">
+				<div style={{ marginBottom: 32 }}>
+					<h2 style={{
+						fontSize: 24,
+						fontWeight: 700,
+						color: "#444",
+						marginBottom: 16,
+						fontFamily: "monospace"
+					}}>
 						Pending Instructions
 					</h2>
 					{loadingInstructions ? (
-						<Card className="bg-slate-900/50 border-slate-700/50 p-8 text-center">
-							<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto"></div>
-						</Card>
+						<div style={{
+							background: "#ffffffaa",
+							border: "2px solid #d6ccc2",
+							borderRadius: 16,
+							padding: 32,
+							textAlign: "center"
+						}}>
+							<div style={{
+								width: 32,
+								height: 32,
+								border: "3px solid #e8e3dd",
+								borderTop: "3px solid #6B625E",
+								borderRadius: "50%",
+								animation: "spin 0.8s linear infinite",
+								margin: "0 auto"
+							}}></div>
+						</div>
 					) : instructions.filter((inst) => inst.status === "pending").length === 0 ? (
-						<Card className="bg-slate-900/50 border-slate-700/50 p-8 text-center">
-							<CheckCircle2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-							<p className="text-slate-400">No pending instructions</p>
-						</Card>
+						<div style={{
+							background: "#ffffffaa",
+							border: "2px solid #d6ccc2",
+							borderRadius: 16,
+							padding: 32,
+							textAlign: "center"
+						}}>
+							<CheckCircle2 style={{
+								width: 48,
+								height: 48,
+								color: "#d5bdaf",
+								margin: "0 auto 12px"
+							}} />
+							<p style={{ color: "#888" }}>No pending instructions</p>
+						</div>
 					) : (
-						<div className="space-y-4">
+						<div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 							{instructions
 								.filter((inst) => inst.status === "pending")
 								.map((instruction) => (
-									<Card
+									<div
 										key={instruction.id}
-										className="bg-blue-500/10 border-blue-500/30 p-6"
+										style={{
+											background: "rgba(59, 130, 246, 0.1)",
+											border: "2px solid rgba(59, 130, 246, 0.3)",
+											borderRadius: 16,
+											padding: 24
+										}}
 									>
-										<div className="flex items-start justify-between">
-											<div className="flex-1">
-												<div className="flex items-center gap-2 mb-2">
-													<RefreshCw className="w-5 h-5 text-blue-400" />
-													<h3 className="text-lg font-semibold text-white">
+										<div style={{
+											display: "flex",
+											alignItems: "flex-start",
+											justifyContent: "space-between",
+											flexWrap: "wrap",
+											gap: 16
+										}}>
+											<div style={{ flex: 1 }}>
+												<div style={{
+													display: "flex",
+													alignItems: "center",
+													gap: 8,
+													marginBottom: 8
+												}}>
+													<RefreshCw style={{ width: 20, height: 20, color: "#3b82f6" }} />
+													<h3 style={{
+														fontSize: 17,
+														fontWeight: 600,
+														color: "#444"
+													}}>
 														{instruction.type.replace(/_/g, " ").toUpperCase()}
 													</h3>
 												</div>
-												<p className="text-slate-300 mb-2">
+												<p style={{
+													color: "#666",
+													marginBottom: 8,
+													fontSize: 14
+												}}>
 													{instruction.description}
 												</p>
-												<p className="text-slate-400 text-sm">
+												<p style={{
+													color: "#888",
+													fontSize: 13
+												}}>
 													Created: {formatDate(instruction.createdAt)}
 												</p>
 											</div>
-											<span className="px-3 py-1 rounded-full text-xs font-semibold uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+											<span style={{
+												padding: "4px 12px",
+												borderRadius: 999,
+												fontSize: 11,
+												fontWeight: 600,
+												textTransform: "uppercase",
+												background: "rgba(251, 191, 36, 0.2)",
+												color: "#f59e0b",
+												border: "2px solid rgba(251, 191, 36, 0.3)"
+											}}>
 												Pending
 											</span>
 										</div>
-									</Card>
+									</div>
 								))}
 						</div>
 					)}
@@ -598,31 +978,70 @@ Scan ${idx + 1}: ${new Date(scan.date).toLocaleString()}
 
 				{/* Scans Section */}
 				<div>
-					<h2 className="text-2xl font-bold text-white mb-4">Scan History</h2>
+					<h2 style={{
+						fontSize: 24,
+						fontWeight: 700,
+						color: "#444",
+						marginBottom: 16,
+						fontFamily: "monospace"
+					}}>Scan History</h2>
 					{server.scans.length === 0 ? (
-						<Card className="bg-slate-900/50 border-slate-700/50 p-8 text-center">
-							<Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-							<p className="text-slate-400">No scans available yet</p>
-						</Card>
+						<div style={{
+							background: "#ffffffaa",
+							border: "2px solid #d6ccc2",
+							borderRadius: 16,
+							padding: 32,
+							textAlign: "center"
+						}}>
+							<Clock style={{
+								width: 48,
+								height: 48,
+								color: "#d5bdaf",
+								margin: "0 auto 12px"
+							}} />
+							<p style={{ color: "#888" }}>No scans available yet</p>
+						</div>
 					) : (
-						<div className="space-y-4">
+						<div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 							{server.scans.map((scan, index) => (
-								<Card
+								<div
 									key={index}
-									className="bg-slate-900/50 border-slate-700/50 p-6"
+									style={{
+										background: "#fff",
+										border: "2px solid #d6ccc2",
+										borderRadius: 16,
+										padding: 24
+									}}
 								>
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-3">
-											<Clock className="w-5 h-5 text-blue-400" />
-											<span className="text-white font-medium">
+									<div style={{
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "space-between",
+										flexWrap: "wrap",
+										gap: 12
+									}}>
+										<div style={{
+											display: "flex",
+											alignItems: "center",
+											gap: 12
+										}}>
+											<Clock style={{ width: 20, height: 20, color: "#6B625E" }} />
+											<span style={{
+												color: "#444",
+												fontWeight: 600,
+												fontSize: 15
+											}}>
 												Scan #{server.scans.length - index}
 											</span>
 										</div>
-										<span className="text-slate-400">
+										<span style={{
+											color: "#888",
+											fontSize: 14
+										}}>
 											{formatDate(scan.date)}
 										</span>
 									</div>
-								</Card>
+								</div>
 							))}
 						</div>
 					)}

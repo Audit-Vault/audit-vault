@@ -75,8 +75,9 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 				justifyContent: "center",
 				padding: 24,
 				background:
-					"linear-gradient(135deg, #020818 0%, #0c1325 50%, #050d1f 100%)",
-				fontFamily: "'DM Sans', system-ui, sans-serif"
+					"#f5ebe0",
+				fontFamily: "'DM Sans', system-ui, sans-serif",
+				color: "#fff"
 			}}
 		>
 			<style>{`
@@ -84,7 +85,7 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse-glow { 0%,100% { opacity: 0.5; } 50% { opacity: 0.9; } }
         .auth-card { animation: fadeUp 0.5s ease both; }
-        .google-btn:hover { background: rgba(255,255,255,0.1) !important; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+        .google-btn:hover { transform: scale(1.1); }
         .google-btn:active { transform: translateY(0); }
         .google-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
       `}</style>
@@ -100,71 +101,37 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 						marginBottom: 36
 					}}
 				>
-					<div style={{ position: "relative", width: 44, height: 44 }}>
-						<div
-							style={{
-								position: "absolute",
-								inset: 0,
-								background: "#38bdf8",
-								borderRadius: 11,
-								filter: "blur(10px)",
-								opacity: 0.5,
-								animation: "pulse-glow 3s ease-in-out infinite"
-							}}
-						/>
-						<div
-							style={{
-								position: "relative",
-								width: 44,
-								height: 44,
-								background: "linear-gradient(135deg, #38bdf8, #0ea5e9)",
-								borderRadius: 11,
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								padding: 10,
-								color: "#fff"
-							}}
-						>
-							<ShieldIcon />
+					<div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+						<div style={{ position: "relative", width: 36, height: 36 }}>
+							<div style={{ position: "relative", width: 36, height: 36, background: "linear-gradient(135deg, #6B625E, #67493c)", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+								<ShieldIcon />
+							</div>
 						</div>
+						<span style={{ fontFamily: "monospace", fontSize: 26, fontWeight: 800, color: "#6B625E", }}>
+							AuditVault
+						</span>
 					</div>
-					<span
-						style={{
-							fontFamily: "'Syne', sans-serif",
-							fontSize: 26,
-							fontWeight: 800,
-							background: "linear-gradient(90deg, #7dd3fc, #38bdf8)",
-							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent",
-						}}
-					>
-						AuditVault
-					</span>
 				</div>
 
 				{/* Card */}
 				<div
 					style={{
-						background: "rgba(15, 23, 42, 0.7)",
-						backdropFilter: "blur(16px)",
-						border: "1px solid rgba(255,255,255,0.08)",
+						border: "2px solid #d6ccc2",
 						borderRadius: 20,
 						padding: "36px 32px",
-						boxShadow: "0 24px 64px rgba(0,0,0,0.5)"
 					}}
 				>
 					<h2
 						style={{
-							fontFamily: "'Syne', sans-serif",
-							fontSize: 22,
+							fontFamily: "monospace",
+							fontSize: 28,
 							fontWeight: 800,
-							color: "#f1f5f9",
+							color: "#444",
 							textAlign: "center",
 							marginBottom: 8
 						}}
 					>
-						Welcome to AuditVault
+						Welcome to <span style={{ fontSize: 40 }}>AuditVault</span>
 					</h2>
 					<p
 						style={{
@@ -175,8 +142,7 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 							lineHeight: 1.6
 						}}
 					>
-						Sign in to run security audits on your servers and get AI-powered
-						reports.
+						Providing AI security audits for next-generation security across all your Linux servers
 					</p>
 
 					{/* Google Button */}
@@ -192,14 +158,12 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 							gap: 12,
 							padding: "14px 20px",
 							borderRadius: 12,
-							background: "rgba(255,255,255,0.06)",
-							border: "1px solid rgba(255,255,255,0.12)",
-							color: "#f1f5f9",
+							background: "#d5bdaf",
+							color: "#fff",
 							fontSize: 15,
 							fontWeight: 600,
 							cursor: "pointer",
 							transition: "all 0.2s",
-							boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
 							fontFamily: "inherit"
 						}}
 					>
@@ -244,94 +208,7 @@ export function AuthPage({ onAuthComplete }: AuthPageProps) {
 							{error}
 						</div>
 					)}
-
-					{/* Divider */}
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: 12,
-							margin: "24px 0",
-							color: "#334155"
-						}}
-					>
-						<div
-							style={{
-								flex: 1,
-								height: 1,
-								background: "rgba(255,255,255,0.06)"
-							}}
-						/>
-						<span
-							style={{ fontSize: 12, color: "#475569", whiteSpace: "nowrap" }}
-						>
-							what you get
-						</span>
-						<div
-							style={{
-								flex: 1,
-								height: 1,
-								background: "rgba(255,255,255,0.06)"
-							}}
-						/>
-					</div>
-
-					{/* Benefits */}
-					{[
-						"AI-powered plain-English security reports",
-						"One-command server agent deployment",
-						"Risk scores & prioritized action plans"
-					].map((benefit, i) => (
-						<div
-							key={i}
-							style={{
-								display: "flex",
-								alignItems: "center",
-								gap: 10,
-								marginBottom: i < 2 ? 10 : 0
-							}}
-						>
-							<div
-								style={{
-									width: 20,
-									height: 20,
-									borderRadius: "50%",
-									flexShrink: 0,
-									background: "rgba(56,189,248,0.15)",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									fontSize: 11,
-									color: "#38bdf8",
-									fontWeight: 700
-								}}
-							>
-								✓
-							</div>
-							<span style={{ fontSize: 13, color: "#94a3b8" }}>{benefit}</span>
-						</div>
-					))}
 				</div>
-
-				{/* Footer note */}
-				<p
-					style={{
-						textAlign: "center",
-						fontSize: 12,
-						color: "#334155",
-						marginTop: 20,
-						lineHeight: 1.6
-					}}
-				>
-					By signing in you agree to our{" "}
-					<span style={{ color: "#38bdf8", cursor: "pointer" }}>
-						Terms of Service
-					</span>{" "}
-					and{" "}
-					<span style={{ color: "#38bdf8", cursor: "pointer" }}>
-						Privacy Policy
-					</span>
-				</p>
 			</div>
 		</div>
 	);
